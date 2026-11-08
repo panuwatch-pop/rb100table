@@ -41,7 +41,7 @@ async function runTests() {
 
   // 3. Test Admin authentication
   const admin = db.prepare('SELECT * FROM admin_users WHERE username = ?').get('admin') as any;
-  if (!admin || !verifyPassword('admin1234', admin.password_hash)) {
+  if (!admin || !verifyPassword('RB@100', admin.password_hash)) {
     throw new Error('Admin password verification failed');
   }
   console.log('✅ Admin credentials and password hashing verified');

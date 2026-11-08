@@ -128,15 +128,19 @@ function initSchema(db: DatabaseSync) {
     }
   }
 
-  // Check if admin user exists
-  const adminCount = db.prepare('SELECT COUNT(*) as count FROM admin_users').get() as { count: number };
-  if (adminCount.count === 0) {
+  // Check if admin user exists and ensure password is updated to 'RB@100'
+  const adminUser = db.prepare('SELECT * FROM admin_users WHERE username = ?').get('admin') as any;
+  const adminPasswordHash = hashPassword('RB@100');
+
+  if (!adminUser) {
     const insertAdmin = db.prepare(`
       INSERT INTO admin_users (username, password_hash, display_name, role, created_at)
       VALUES (?, ?, ?, ?, ?)
     `);
-    const defaultPasswordHash = hashPassword('admin1234');
-    insertAdmin.run('admin', defaultPasswordHash, 'ผู้ดูแลระบบ (Admin)', 'admin', new Date().toISOString());
+    insertAdmin.run('admin', adminPasswordHash, 'ผู้ดูแลระบบ (Admin)', 'admin', new Date().toISOString());
+  } else {
+    // Automatically update existing admin user password to RB@100
+    db.prepare('UPDATE admin_users SET password_hash = ? WHERE username = ?').run(adminPasswordHash, 'admin');
   }
 
   // Seed default settings if missing

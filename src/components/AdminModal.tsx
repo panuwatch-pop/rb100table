@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TableItem } from '@/lib/db';
+import { APP_VERSION } from '@/config/version';
 import { 
   X, 
   ShieldCheck, 
@@ -57,8 +58,16 @@ export default function AdminModal({
   // Login Form
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(true);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [loginLoading, setLoginLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedUser = localStorage.getItem('reunion_admin_user');
+      if (savedUser) setUsername(savedUser);
+    }
+  }, []);
 
   // Tab
   const [activeTab, setActiveTab] = useState<'reservations' | 'settings'>('reservations');
@@ -105,6 +114,10 @@ export default function AdminModal({
 
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'เข้าสู่ระบบไม่สำเร็จ');
+
+      if (rememberMe && typeof window !== 'undefined') {
+        localStorage.setItem('reunion_admin_user', username);
+      }
 
       setPassword('');
       onLoginSuccess();
@@ -335,7 +348,12 @@ export default function AdminModal({
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold">แผงควบคุมระบบจัดงาน (Admin Portal)</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold">แผงควบคุมระบบจัดงาน (Admin Portal)</h2>
+                <span className="px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-white/20 text-white border border-white/30">
+                  {APP_VERSION}
+                </span>
+              </div>
               <p className="text-xs text-slate-400">จัดการข้อมูลการจอง ยอดเงิน และการแจ้งเตือน LINE</p>
             </div>
           </div>
@@ -404,11 +422,22 @@ export default function AdminModal({
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="รหัสผ่าน (ค่าเริ่มต้น: admin1234)"
+                    placeholder="กรอกรหัสผ่านผู้ดูแล"
                     className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 mt-1">รหัสผ่านเริ่มต้นคือ: <code>admin1234</code></p>
+              </div>
+
+              <div className="flex items-center justify-between text-[11px] pt-0.5">
+                <label className="flex items-center gap-1.5 cursor-pointer text-slate-600 select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-3.5 h-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <span>จดจำการเข้าสู่ระบบ</span>
+                </label>
               </div>
 
               <button

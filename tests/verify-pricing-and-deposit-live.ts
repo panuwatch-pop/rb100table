@@ -11,7 +11,7 @@ async function liveVerify() {
   const loginRes = await fetch('http://localhost:3000/api/admin/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: 'admin', password: 'admin1234' })
+    body: JSON.stringify({ username: 'admin', password: 'RB@100' })
   });
   const loginData = await loginRes.json();
   console.log('Admin login success:', loginData.success);
