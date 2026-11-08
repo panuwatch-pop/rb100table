@@ -54,6 +54,13 @@ const TablePin = memo(function TablePin({
   return (
     <button
       type="button"
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        onSelect(table);
+      }}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(table);

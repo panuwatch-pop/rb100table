@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       name: AUTH_COOKIE_NAME,
       value: token,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Allow admin login even if SSL certificate is self-signed / temporary
       sameSite: 'lax',
       path: '/',
       maxAge: 7 * 24 * 60 * 60
