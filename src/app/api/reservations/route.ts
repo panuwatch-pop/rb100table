@@ -31,9 +31,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Flexible deposit amount
-    const parsedDeposit = deposit_amount !== undefined && Number(deposit_amount) > 0
-      ? Math.min(Number(deposit_amount), table.price)
-      : table.deposit_amount;
+    const isUnpaid = payment_status === 'unpaid';
+    const parsedDeposit = isUnpaid
+      ? 0
+      : (deposit_amount !== undefined && Number(deposit_amount) > 0)
+        ? Math.min(Number(deposit_amount), table.price)
+        : table.deposit_amount;
 
     const updatedTable = createReservation({
       table_number: Number(table_number),
@@ -43,6 +46,7 @@ export async function POST(req: NextRequest) {
       note: note ? note.trim() : undefined,
       payment_status: payment_status || 'unpaid',
       deposit_amount: parsedDeposit,
+      deposit_paid: isUnpaid ? 0 : undefined,
       slip_url: slip_url || undefined
     });
 
@@ -51,8 +55,8 @@ export async function POST(req: NextRequest) {
     let depositQR = '';
     let fullQR = '';
 
-    if (promptpayTarget) {
-      depositQR = await generatePromptPayQR(promptpayTarget, parsedDeposit);
+    if (promptpayTarget && !isUnpaid) {
+      depositQR = await generatePromptPayQR(promptpayTarget, parsedDeposit || table.deposit_amount);
       fullQR = await generatePromptPayQR(promptpayTarget, table.price);
     }
 

@@ -21,6 +21,7 @@ interface NavbarProps {
     locked_tables: number;
   };
   eventTitle: string;
+  eventSubtitle?: string;
   viewMode: 'map' | 'list';
   onViewModeChange: (mode: 'map' | 'list') => void;
   searchQuery: string;
@@ -34,6 +35,7 @@ interface NavbarProps {
 export default function Navbar({
   stats,
   eventTitle,
+  eventSubtitle,
   viewMode,
   onViewModeChange,
   searchQuery,
@@ -57,7 +59,7 @@ export default function Navbar({
                 {eventTitle || 'ระบบจองโต๊ะงานเลี้ยงรุ่น'}
               </h1>
               <p className="text-xs text-slate-500 hidden sm:block">
-                School Reunion Table Reservation • รวม 107 โต๊ะ
+                {eventSubtitle || 'School Reunion Table Reservation • รวม 107 โต๊ะ'}
               </p>
             </div>
           </div>

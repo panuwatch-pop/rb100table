@@ -279,6 +279,32 @@ export default function AdminModal({
     }
   };
 
+  // Cancel single reservation by Admin
+  const handleCancelReservation = async (table: TableItem) => {
+    if (!table.reservation_id) {
+      alert(`ไม่พบรหัสการจองของโต๊ะ #${table.table_number}`);
+      return;
+    }
+
+    const booker = table.booker_name ? `ของคุณ ${table.booker_name}` : '';
+    if (!confirm(`คุณต้องการ "ยกเลิกการจอง" โต๊ะหมายเลข ${table.table_number} ${booker} ใช่หรือไม่?\n\nเมื่อยกเลิกแล้ว โต๊ะจะกลับมาเป็นสถานะ "ว่าง" ทันที`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/reservations/${table.reservation_id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'ยกเลิกการจองไม่สำเร็จ');
+
+      alert(`ยกเลิกการจองโต๊ะหมายเลข ${table.table_number} เรียบร้อยแล้ว`);
+      onRefreshData();
+    } catch (err: any) {
+      alert(`เกิดข้อผิดพลาด: ${err.message}`);
+    }
+  };
+
   const reservedTablesList = tables.filter(t => t.status !== 'AVAILABLE');
   const displayedTables = tableFilterMode === 'reserved' 
     ? reservedTablesList 
@@ -544,12 +570,20 @@ export default function AdminModal({
                                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                     t.status === 'PAID'
                                       ? 'bg-emerald-100 text-emerald-800'
+                                      : t.payment_status === 'unpaid'
+                                      ? 'bg-slate-200 text-slate-800 border border-slate-300'
                                       : t.status === 'RESERVED'
                                       ? 'bg-amber-100 text-amber-800'
                                       : 'bg-slate-100 text-slate-600'
                                   }`}
                                 >
-                                  {t.status === 'PAID' ? 'ชำระครบ' : t.status === 'RESERVED' ? 'มัดจำแล้ว' : '🟢 ว่าง'}
+                                  {t.status === 'PAID' 
+                                    ? 'ชำระครบ' 
+                                    : t.payment_status === 'unpaid'
+                                    ? 'จอง (ยังไม่มัดจำ)'
+                                    : t.status === 'RESERVED' 
+                                    ? 'มัดจำแล้ว' 
+                                    : '🟢 ว่าง'}
                                 </span>
                               </td>
                               <td className="py-2.5 px-3 font-bold text-blue-950">
@@ -582,18 +616,29 @@ export default function AdminModal({
                                     ✏️ ตั้งราคา
                                   </button>
 
-                                  {/* If table is reserved, allow editing/moving booking */}
+                                  {/* If table is reserved, allow editing/moving booking & cancel */}
                                   {t.status !== 'AVAILABLE' && (
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        onSelectTableForEdit(t);
-                                        onClose();
-                                      }}
-                                      className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold text-[11px] transition-all cursor-pointer"
-                                    >
-                                      แก้ไข / ย้าย
-                                    </button>
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          onSelectTableForEdit(t);
+                                          onClose();
+                                        }}
+                                        className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-semibold text-[11px] transition-all cursor-pointer"
+                                      >
+                                        แก้ไข / ย้าย
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleCancelReservation(t)}
+                                        title="ยกเลิกการจองโต๊ะนี้"
+                                        className="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-[11px] transition-all cursor-pointer flex items-center gap-1"
+                                      >
+                                        <Trash2 className="w-3 h-3 text-rose-600" />
+                                        <span>ยกเลิก</span>
+                                      </button>
+                                    </>
                                   )}
                                 </div>
                               </td>
@@ -633,6 +678,17 @@ export default function AdminModal({
                         type="text"
                         value={settings.event_title || ''}
                         onChange={(e) => setSettings({ ...settings, event_title: e.target.value })}
+                        placeholder="เช่น งานเลี้ยงรุ่นคืนสู่เหย้า ประจำปี"
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-700 font-medium mb-1">คำบรรยาย / สถานที่จัดงาน (Event Subtitle)</label>
+                      <input
+                        type="text"
+                        value={settings.event_subtitle || ''}
+                        onChange={(e) => setSettings({ ...settings, event_subtitle: e.target.value })}
+                        placeholder="เช่น School Reunion Table Reservation • รวม 107 โต๊ะ"
                         className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
                       />
                     </div>

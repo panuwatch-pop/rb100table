@@ -175,10 +175,18 @@ export default function TableView({
                         ? 'bg-emerald-100 text-emerald-800'
                         : isPaid
                         ? 'bg-rose-100 text-rose-800'
+                        : table.payment_status === 'unpaid'
+                        ? 'bg-slate-200 text-slate-800 border border-slate-300'
                         : 'bg-amber-100 text-amber-800'
                     }`}
                   >
-                    {isAvailable ? 'ว่าง' : isPaid ? 'ชำระครบ' : 'มัดจำแล้ว'}
+                    {isAvailable 
+                      ? 'ว่าง' 
+                      : isPaid 
+                      ? 'ชำระครบ' 
+                      : table.payment_status === 'unpaid'
+                      ? 'จอง (ยังไม่มัดจำ)'
+                      : 'มัดจำแล้ว'}
                   </span>
                 </div>
 

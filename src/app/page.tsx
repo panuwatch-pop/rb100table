@@ -242,6 +242,7 @@ export default function Home() {
       <Navbar
         stats={stats}
         eventTitle={settings.event_title}
+        eventSubtitle={settings.event_subtitle}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         searchQuery={searchQuery}

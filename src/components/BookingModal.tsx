@@ -49,7 +49,7 @@ export default function BookingModal({
   const [bookerPhone, setBookerPhone] = useState('');
   const [bookerBatch, setBookerBatch] = useState('');
   const [note, setNote] = useState('');
-  const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full'>('deposit');
+  const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full' | 'unpaid'>('deposit');
   const [customDeposit, setCustomDeposit] = useState<string>('1000');
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
@@ -157,9 +157,17 @@ export default function BookingModal({
         }
       }
 
-      const depositAmountNum = paymentChoice === 'deposit'
-        ? (Number(customDeposit) > 0 ? Number(customDeposit) : table.deposit_amount)
-        : table.price;
+      const depositAmountNum = paymentChoice === 'unpaid'
+        ? 0
+        : paymentChoice === 'deposit'
+          ? (Number(customDeposit) > 0 ? Number(customDeposit) : table.deposit_amount)
+          : table.price;
+
+      const paymentStatus = paymentChoice === 'full'
+        ? 'fully_paid'
+        : paymentChoice === 'unpaid'
+          ? 'unpaid'
+          : 'deposit_paid';
 
       const res = await fetch('/api/reservations', {
         method: 'POST',
@@ -170,7 +178,7 @@ export default function BookingModal({
           booker_phone: bookerPhone.trim(),
           booker_batch: bookerBatch.trim() || null,
           note: note.trim() || null,
-          payment_status: paymentChoice === 'full' ? 'fully_paid' : 'deposit_paid',
+          payment_status: paymentStatus,
           deposit_amount: depositAmountNum,
           slip_url: uploadedSlipUrl
         })
@@ -181,9 +189,14 @@ export default function BookingModal({
         throw new Error(data.error || 'จองโต๊ะไม่สำเร็จ');
       }
 
-      setSuccessMsg('🎉 จองโต๊ะสำเร็จเรียบร้อยแล้ว!');
-      if (data.data?.qr) {
-        setQrCodeUrl(paymentChoice === 'full' ? data.data.qr.full : data.data.qr.deposit);
+      if (paymentChoice === 'unpaid') {
+        setSuccessMsg('🎉 จองโต๊ะสำเร็จเรียบร้อยแล้ว! (สถานะ: จองไว้ก่อน ยังไม่ได้ชำระมัดจำ)');
+        setQrCodeUrl(null);
+      } else {
+        setSuccessMsg('🎉 จองโต๊ะสำเร็จเรียบร้อยแล้ว!');
+        if (data.data?.qr) {
+          setQrCodeUrl(paymentChoice === 'full' ? data.data.qr.full : data.data.qr.deposit);
+        }
       }
       onBookingSuccess();
     } catch (err: any) {
@@ -346,10 +359,18 @@ export default function BookingModal({
                       ? 'bg-emerald-500 text-white'
                       : isPaid
                       ? 'bg-rose-500 text-white'
+                      : table.payment_status === 'unpaid'
+                      ? 'bg-slate-700 text-amber-300'
                       : 'bg-amber-400 text-slate-950'
                   }`}
                 >
-                  {isAvailable ? 'ว่าง (กดจองได้)' : isPaid ? 'ชำระครบ 100%' : 'มัดจำแล้ว'}
+                  {isAvailable 
+                    ? 'ว่าง (กดจองได้)' 
+                    : isPaid 
+                    ? 'ชำระครบ 100%' 
+                    : table.payment_status === 'unpaid'
+                    ? 'จองแล้ว (ยังไม่มัดจำ)'
+                    : 'มัดจำแล้ว'}
                 </span>
               </div>
               <p className="text-xs text-slate-300">
@@ -541,41 +562,64 @@ export default function BookingModal({
               {/* Payment Option Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-2">
-                  ตัวเลือกการชำระเงิน
+                  ตัวเลือกการชำระเงิน <span className="text-rose-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-2.5 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                  {/* Option 1: จองไว้ก่อน (ยังไม่จ่ายมัดจำ) */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentChoice('unpaid')}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      paymentChoice === 'unpaid'
+                        ? 'border-amber-600 bg-amber-50/70 text-amber-950 ring-2 ring-amber-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
+                    }`}
+                  >
+                    <div className="font-bold flex items-center gap-1">
+                      <span>จองไว้ก่อน</span>
+                    </div>
+                    <div className="text-amber-800 font-extrabold text-sm mt-0.5">
+                      0 บาท
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                      ยังไม่จ่ายมัดจำ (ค้างชำระ {table.price.toLocaleString()} บ.)
+                    </div>
+                  </button>
+
+                  {/* Option 2: ชำระเฉพาะมัดจำ */}
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('deposit')}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       paymentChoice === 'deposit'
-                        ? 'border-blue-600 bg-blue-50/50 text-blue-900 ring-2 ring-blue-500/20'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                        ? 'border-blue-600 bg-blue-50/70 text-blue-950 ring-2 ring-blue-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
                     <div className="font-bold">ชำระเฉพาะมัดจำ</div>
                     <div className="text-blue-700 font-extrabold text-sm mt-0.5">
                       {(Number(customDeposit) || table.deposit_amount).toLocaleString()} บาท
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
                       คงเหลือ {Math.max(0, table.price - (Number(customDeposit) || table.deposit_amount)).toLocaleString()} บ. ชำระภายหลัง
                     </div>
                   </button>
 
+                  {/* Option 3: ชำระเต็มจำนวน */}
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('full')}
-                    className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       paymentChoice === 'full'
-                        ? 'border-emerald-600 bg-emerald-50/50 text-emerald-900 ring-2 ring-emerald-500/20'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
                     <div className="font-bold">ชำระเต็มจำนวน (100%)</div>
                     <div className="text-emerald-700 font-extrabold text-sm mt-0.5">
                       {table.price.toLocaleString()} บาท
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5">
+                    <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
                       ไม่มียอดค้างชำระ
                     </div>
                   </button>
