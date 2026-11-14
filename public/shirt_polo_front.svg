@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="poloNavy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="goldBadge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="600" height="600" rx="32" fill="#f8fafc"/>
+  
+  <!-- Badge Label -->
+  <rect x="36" y="32" width="120" height="32" rx="16" fill="#1e3a8a"/>
+  <text x="96" y="53" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">ภาพด้านหน้า</text>
+
+  <!-- Polo Shirt Body -->
+  <g filter="url(#shadow)">
+    <!-- Main Torso & Sleeves -->
+    <path d="M190,130 L130,200 L70,250 L115,310 L165,270 L170,520 L430,520 L435,270 L485,310 L530,250 L470,200 L410,130 C370,145 230,145 190,130 Z" fill="url(#poloNavy)"/>
+    
+    <!-- Sleeve Cuffs with Gold Accent -->
+    <path d="M70,250 L115,310 L125,300 L85,242 Z" fill="#f59e0b"/>
+    <path d="M530,250 L485,310 L475,300 L515,242 Z" fill="#f59e0b"/>
+
+    <!-- Bottom Hem Accent -->
+    <rect x="170" y="514" width="260" height="6" fill="#f59e0b" opacity="0.8"/>
+
+    <!-- Collar -->
+    <path d="M220,135 L300,195 L300,290 L275,290 L275,185 L205,140 Z" fill="#1e3a8a"/>
+    <path d="M380,135 L300,195 L300,290 L325,290 L325,185 L395,140 Z" fill="#2563eb"/>
+    <path d="M220,135 L300,195 L380,135 L345,115 L300,130 L255,115 Z" fill="#1d4ed8"/>
+    
+    <!-- Buttons -->
+    <circle cx="300" cy="215" r="4.5" fill="#f8fafc"/>
+    <circle cx="300" cy="245" r="4.5" fill="#f8fafc"/>
+    <circle cx="300" cy="275" r="4.5" fill="#f8fafc"/>
+
+    <!-- Chest Badge (Embroidered School Logo on Left Chest) -->
+    <g transform="translate(355, 220)">
+      <circle cx="20" cy="20" r="22" fill="url(#goldBadge)"/>
+      <circle cx="20" cy="20" r="18" fill="#0f172a"/>
+      <polygon points="20,7 23,16 32,16 25,22 28,31 20,25 12,31 15,22 8,16 17,16" fill="#fbbf24"/>
+      <text x="20" y="47" font-family="sans-serif" font-size="7" font-weight="900" fill="#f59e0b" text-anchor="middle" letter-spacing="1">100 YEARS</text>
+    </g>
+
+    <!-- Side Slits -->
+    <path d="M170,490 L170,520" stroke="#f59e0b" stroke-width="4"/>
+    <path d="M430,490 L430,520" stroke="#f59e0b" stroke-width="4"/>
+  </g>
+
+  <!-- Tagline Text -->
+  <text x="300" y="565" font-family="sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">เสื้อโปโลพรีเมียม (ด้านหน้า) • ปักตราสัญลักษณ์ดิ้นทอง</text>
+</svg>

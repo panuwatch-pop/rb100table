@@ -21,7 +21,12 @@ import {
   ExternalLink,
   Edit2,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Shirt,
+  Truck,
+  MapPin,
+  Eye,
+  Package
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -70,7 +75,23 @@ export default function AdminModal({
   }, []);
 
   // Tab
-  const [activeTab, setActiveTab] = useState<'reservations' | 'settings'>('reservations');
+  const [activeTab, setActiveTab] = useState<'reservations' | 'shirts' | 'settings'>('reservations');
+
+  // Shirt Orders State
+  const [shirtOrders, setShirtOrders] = useState<any[]>([]);
+  const [shirtSummary, setShirtSummary] = useState<{
+    total_orders: number;
+    total_shirts: number;
+    total_revenue: number;
+    size_summary: Record<string, number>;
+  }>({
+    total_orders: 0,
+    total_shirts: 0,
+    total_revenue: 0,
+    size_summary: {}
+  });
+  const [shirtLoading, setShirtLoading] = useState(false);
+  const [shirtSearchQuery, setShirtSearchQuery] = useState('');
 
   // Settings Form State
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -82,6 +103,116 @@ export default function AdminModal({
   // Filter reservations & tables
   const [searchTableQuery, setSearchTableQuery] = useState('');
   const [tableFilterMode, setTableFilterMode] = useState<'reserved' | 'all'>('reserved');
+
+  const fetchShirtOrders = async () => {
+    setShirtLoading(true);
+    try {
+      const res = await fetch(`/api/admin/shirts/orders?t=${Date.now()}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setShirtOrders(data.data.orders || []);
+        setShirtSummary(data.data.summary || {
+          total_orders: 0,
+          total_shirts: 0,
+          total_revenue: 0,
+          size_summary: {}
+        });
+      }
+    } catch (err) {
+      console.error('Fetch shirt orders error:', err);
+    } finally {
+      setShirtLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin && isOpen && activeTab === 'shirts') {
+      fetchShirtOrders();
+    }
+  }, [isAdmin, isOpen, activeTab]);
+
+  const handleUpdateShirtStatus = async (orderId: number, status: string, paymentStatus?: string) => {
+    try {
+      const res = await fetch(`/api/admin/shirts/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order_status: status, payment_status: paymentStatus })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      fetchShirtOrders();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการอัปเดตสถานะ');
+    }
+  };
+
+  const handleCancelShirtOrder = async (orderId: number) => {
+    if (!confirm(`คุณต้องการยกเลิกคำสั่งซื้อเสื้อ #${orderId} ใช่หรือไม่?`)) return;
+    try {
+      const res = await fetch(`/api/admin/shirts/orders/${orderId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      fetchShirtOrders();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาด');
+    }
+  };
+
+  const handleExportShirtCSV = () => {
+    if (shirtOrders.length === 0) {
+      alert('ยังไม่มีข้อมูลออเดอร์เสื้อรุ่นให้ดาวน์โหลด');
+      return;
+    }
+
+    const headers = [
+      'รหัสคำสั่งซื้อ',
+      'ชื่อผู้สั่ง',
+      'เบอร์โทรศัพท์',
+      'รุ่น/ศิษย์เก่า',
+      'วิธีรับสินค้า',
+      'ที่อยู่จัดส่ง',
+      'รายการสินค้าและไซส์',
+      'จำนวนรวม (ตัว)',
+      'ค่าจัดส่ง (บาท)',
+      'ยอดเงินรวม (บาท)',
+      'สถานะการชำระเงิน',
+      'สถานะออเดอร์',
+      'หมายเหตุ',
+      'วันที่สั่งซื้อ'
+    ];
+
+    const rows = shirtOrders.map(o => {
+      const itemsStr = (o.items || []).map((it: any) => `${it.shirt_name} (${it.size}) x${it.quantity}`).join('; ');
+      return [
+        o.order_code,
+        `"${(o.customer_name || '').replace(/"/g, '""')}"`,
+        `"${o.customer_phone || ''}"`,
+        `"${(o.customer_batch || '').replace(/"/g, '""')}"`,
+        o.delivery_type === 'delivery' ? 'จัดส่งพัสดุ' : 'รับหน้างาน',
+        `"${(o.delivery_address || '').replace(/"/g, '""')}"`,
+        `"${itemsStr.replace(/"/g, '""')}"`,
+        o.total_quantity,
+        o.shipping_fee || 0,
+        o.total_price,
+        o.payment_status === 'paid' ? 'ชำระแล้ว' : 'รอชำระเงิน',
+        o.order_status === 'delivered' ? 'ส่งมอบแล้ว' : o.order_status === 'shipped' ? 'จัดส่งแล้ว' : o.order_status === 'cancelled' ? 'ยกเลิกแล้ว' : 'รอดำเนินการ',
+        `"${(o.note || '').replace(/"/g, '""')}"`,
+        o.created_at || ''
+      ];
+    });
+
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `รายงานออเดอร์เสื้อรุ่น_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   // Fetch settings when logged in and tab is active
   useEffect(() => {
@@ -509,6 +640,19 @@ export default function AdminModal({
 
                 <button
                   type="button"
+                  onClick={() => setActiveTab('shirts')}
+                  className={`py-3 border-b-2 transition-all flex items-center gap-1.5 ${
+                    activeTab === 'shirts'
+                      ? 'border-indigo-600 text-indigo-600'
+                      : 'border-transparent text-slate-500 hover:text-slate-900'
+                  }`}
+                >
+                  <Shirt className="w-4 h-4" />
+                  <span>ออเดอร์เสื้อรุ่น ({shirtOrders.length})</span>
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => setActiveTab('settings')}
                   className={`py-3 border-b-2 transition-all flex items-center gap-1.5 ${
                     activeTab === 'settings'
@@ -517,7 +661,7 @@ export default function AdminModal({
                   }`}
                 >
                   <Settings className="w-4 h-4" />
-                  <span>ตั้งค่าราคาโต๊ะ & LINE Group</span>
+                  <span>ตั้งค่าระบบ & ราคา</span>
                 </button>
               </div>
 
@@ -678,8 +822,244 @@ export default function AdminModal({
                     </div>
                   )}
                 </div>
+              ) : activeTab === 'shirts' ? (
+                /* TAB 2: SHIRT ORDERS MANAGEMENT */
+                <div className="space-y-4">
+                  {/* Summary Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                      <span className="text-slate-500 text-[11px]">ยอดคำสั่งซื้อทั้งหมด</span>
+                      <div className="text-base font-bold text-indigo-700 mt-0.5">
+                        {shirtSummary.total_orders} รายการ
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                      <span className="text-slate-500 text-[11px]">จำนวนเสื้อทั้งหมด</span>
+                      <div className="text-base font-bold text-blue-700 mt-0.5">
+                        {shirtSummary.total_shirts} ตัว
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
+                      <span className="text-slate-500 text-[11px]">ยอดเงินรวมทั้งหมด</span>
+                      <div className="text-base font-bold text-emerald-700 mt-0.5">
+                        {shirtSummary.total_revenue.toLocaleString()} บาท
+                      </div>
+                    </div>
+                    <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                      <span className="text-slate-500 text-[11px]">ส่งออกข้อมูล</span>
+                      <button
+                        type="button"
+                        onClick={handleExportShirtCSV}
+                        className="mt-1 flex items-center justify-center gap-1.5 py-1.5 px-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs transition-all shadow-xs"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>Export CSV เสื้อ</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Size Breakdown Card for Factory */}
+                  <div className="p-3.5 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-2xl border border-indigo-200 text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-bold text-indigo-950">
+                        <Package className="w-4 h-4 text-indigo-600" />
+                        <span>สรุปยอดจำนวนเสื้อแยกตามไซส์ (สำหรับส่งโรงงานตัดเย็บ):</span>
+                      </div>
+                      <span className="text-[11px] text-indigo-700 font-semibold">
+                        รวมทั้งสิ้น {shirtSummary.total_shirts} ตัว
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'].map((sz) => (
+                        <div
+                          key={sz}
+                          className="px-3 py-1.5 bg-white border border-indigo-200 rounded-xl shadow-2xs flex items-center gap-2"
+                        >
+                          <span className="font-bold text-slate-700 text-xs">{sz}</span>
+                          <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 rounded font-black text-xs">
+                            {shirtSummary.size_summary?.[sz] || 0}
+                          </span>
+                          <span className="text-[10px] text-slate-400">ตัว</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Search and Action Bar */}
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="relative w-full sm:w-72 text-xs">
+                      <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={shirtSearchQuery}
+                        onChange={(e) => setShirtSearchQuery(e.target.value)}
+                        placeholder="ค้นหาชื่อ, เบอร์โทร, หรือรหัสออเดอร์..."
+                        className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fetchShirtOrders}
+                      disabled={shirtLoading}
+                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${shirtLoading ? 'animate-spin' : ''}`} />
+                      <span>รีเฟรชข้อมูล</span>
+                    </button>
+                  </div>
+
+                  {/* Orders Table */}
+                  <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold text-[11px] uppercase tracking-wider">
+                          <tr>
+                            <th className="py-3 px-3">รหัสออเดอร์</th>
+                            <th className="py-3 px-3">ผู้สั่งจอง</th>
+                            <th className="py-3 px-3">การจัดส่ง</th>
+                            <th className="py-3 px-3">รายการเสื้อ</th>
+                            <th className="py-3 px-3 text-right">ยอดรวม</th>
+                            <th className="py-3 px-3 text-center">สลิป</th>
+                            <th className="py-3 px-3 text-center">ชำระเงิน</th>
+                            <th className="py-3 px-3 text-center">สถานะออเดอร์</th>
+                            <th className="py-3 px-3 text-center">จัดการ</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {shirtOrders
+                            .filter((o) => {
+                              if (!shirtSearchQuery) return true;
+                              const q = shirtSearchQuery.toLowerCase();
+                              return (
+                                o.order_code?.toLowerCase().includes(q) ||
+                                o.customer_name?.toLowerCase().includes(q) ||
+                                o.customer_phone?.includes(q) ||
+                                o.customer_batch?.toLowerCase().includes(q)
+                              );
+                            })
+                            .map((o) => (
+                              <tr key={o.id} className="hover:bg-slate-50/70 transition-all">
+                                <td className="py-3 px-3 font-mono font-bold text-slate-900">
+                                  {o.order_code}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <div className="font-bold text-slate-900">{o.customer_name}</div>
+                                  <div className="text-[11px] text-slate-500">{o.customer_phone}</div>
+                                  {o.customer_batch && (
+                                    <span className="inline-block mt-0.5 px-1.5 py-0.2 rounded text-[10px] bg-slate-100 text-slate-600">
+                                      รุ่น {o.customer_batch}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3">
+                                  {o.delivery_type === 'delivery' ? (
+                                    <div className="text-[11px]">
+                                      <span className="font-bold text-blue-700 flex items-center gap-1">
+                                        <Truck className="w-3 h-3" /> จัดส่งปลายทาง
+                                      </span>
+                                      <p className="text-slate-600 text-[10px] line-clamp-2 mt-0.5 max-w-[180px]">
+                                        {o.delivery_address}
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    <span className="font-bold text-emerald-700 flex items-center gap-1 text-[11px]">
+                                      <MapPin className="w-3 h-3" /> รับหน้างาน (ฟรี)
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3">
+                                  <div className="space-y-1 max-w-[200px]">
+                                    {(o.items || []).map((it: any, idx: number) => (
+                                      <div key={idx} className="flex items-center justify-between text-[11px]">
+                                        <span className="text-slate-700 truncate pr-1">
+                                          {it.shirt_name}
+                                        </span>
+                                        <span className="font-bold text-indigo-700 shrink-0">
+                                          {it.size} x{it.quantity}
+                                        </span>
+                                      </div>
+                                    ))}
+                                    <div className="text-[10px] text-slate-400 pt-0.5 border-t border-slate-100">
+                                      รวม {o.total_quantity} ตัว
+                                      {o.shipping_fee > 0 && ` • ค่าส่ง ${o.shipping_fee} บ.`}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="py-3 px-3 text-right font-bold text-slate-900">
+                                  {o.total_price.toLocaleString()} บ.
+                                </td>
+                                <td className="py-3 px-3 text-center">
+                                  {o.slip_url ? (
+                                    <a
+                                      href={o.slip_url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] hover:bg-emerald-100"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                      <span>ดูสลิป</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-[11px] text-slate-400">-</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleUpdateShirtStatus(
+                                        o.id,
+                                        o.order_status,
+                                        o.payment_status === 'paid' ? 'unpaid' : 'paid'
+                                      )
+                                    }
+                                    className={`px-2 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                                      o.payment_status === 'paid'
+                                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200'
+                                        : 'bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200'
+                                    }`}
+                                  >
+                                    {o.payment_status === 'paid' ? '✓ ชำระแล้ว' : '⏳ รอชำระ'}
+                                  </button>
+                                </td>
+                                <td className="py-3 px-3 text-center">
+                                  <select
+                                    value={o.order_status}
+                                    onChange={(e) => handleUpdateShirtStatus(o.id, e.target.value)}
+                                    className="text-[11px] bg-slate-50 border border-slate-200 rounded px-1.5 py-1 font-medium text-slate-700 outline-none"
+                                  >
+                                    <option value="pending">รอดำเนินการ</option>
+                                    <option value="shipped">จัดส่งแล้ว</option>
+                                    <option value="delivered">ส่งมอบแล้ว</option>
+                                    <option value="cancelled">ยกเลิก</option>
+                                  </select>
+                                </td>
+                                <td className="py-3 px-3 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCancelShirtOrder(o.id)}
+                                    title="ยกเลิกออเดอร์นี้"
+                                    className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded transition-all cursor-pointer"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          {shirtOrders.length === 0 && (
+                            <tr>
+                              <td colSpan={9} className="py-8 text-center text-slate-400 text-xs">
+                                ยังไม่มีรายการสั่งจองเสื้อรุ่น
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                /* TAB 2: SETTINGS & LINE NOTIFICATION */
+                /* TAB 3: SETTINGS & CONFIGURATION */
                 <form onSubmit={handleSaveSettings} className="max-w-2xl space-y-4 text-xs">
                   {settingsMsg && (
                     <div
@@ -788,6 +1168,37 @@ export default function AdminModal({
                           placeholder="เช่น 1000"
                           className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
                         />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-amber-200/70">
+                      <div>
+                        <label className="block text-slate-700 font-medium mb-1">
+                          🌟 ราคาโปรโมชั่นค่าโต๊ะ Early Bird (บาท)
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={settings.early_bird_table_price || '7000'}
+                          onChange={(e) => setSettings({ ...settings, early_bird_table_price: e.target.value })}
+                          placeholder="เช่น 7000"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-amber-900"
+                        />
+                        <span className="text-[10px] text-slate-500">สำหรับแพ็กเกจโปรโมชั่นลดพิเศษ 7,000 บ.</span>
+                      </div>
+                      <div>
+                        <label className="block text-slate-700 font-medium mb-1">
+                          📦 ค่าจัดส่งพัสดุสำหรับเสื้อรุ่น (บาท)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={settings.shirt_shipping_fee || '50'}
+                          onChange={(e) => setSettings({ ...settings, shirt_shipping_fee: e.target.value })}
+                          placeholder="เช่น 50"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-bold text-slate-900"
+                        />
+                        <span className="text-[10px] text-slate-500">ค่าส่งกรณีเลือกจัดส่งถึงบ้าน (รับหน้างาน = 0 บ.)</span>
                       </div>
                     </div>
 

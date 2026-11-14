@@ -10,7 +10,8 @@ import {
   RefreshCw, 
   CheckCircle2, 
   Clock, 
-  Layers 
+  Layers,
+  Shirt
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -23,8 +24,8 @@ interface NavbarProps {
   };
   eventTitle: string;
   eventSubtitle?: string;
-  viewMode: 'map' | 'list';
-  onViewModeChange: (mode: 'map' | 'list') => void;
+  viewMode: 'map' | 'list' | 'shirts';
+  onViewModeChange: (mode: 'map' | 'list' | 'shirts') => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   isAdmin: boolean;
@@ -97,6 +98,18 @@ export default function Navbar({
               >
                 <ListFilter className="w-3.5 h-3.5" />
                 <span>รายชื่อ</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onViewModeChange('shirts')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                  viewMode === 'shirts'
+                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xs font-semibold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Shirt className="w-3.5 h-3.5" />
+                <span>สั่งจองเสื้อรุ่น</span>
               </button>
             </div>
 

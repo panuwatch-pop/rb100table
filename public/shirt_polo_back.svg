@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="poloNavyBack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="50%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="50%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <filter id="shadowBack" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="600" height="600" rx="32" fill="#f8fafc"/>
+  
+  <!-- Badge Label -->
+  <rect x="36" y="32" width="120" height="32" rx="16" fill="#047857"/>
+  <text x="96" y="53" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">ภาพด้านหลัง</text>
+
+  <!-- Polo Shirt Body Back -->
+  <g filter="url(#shadowBack)">
+    <!-- Main Torso & Sleeves -->
+    <path d="M190,130 L130,200 L70,250 L115,310 L165,270 L170,520 L430,520 L435,270 L485,310 L530,250 L470,200 L410,130 C370,140 230,140 190,130 Z" fill="url(#poloNavyBack)"/>
+    
+    <!-- Sleeve Cuffs with Gold Accent -->
+    <path d="M70,250 L115,310 L125,300 L85,242 Z" fill="#f59e0b"/>
+    <path d="M530,250 L485,310 L475,300 L515,242 Z" fill="#f59e0b"/>
+
+    <!-- Bottom Hem Accent -->
+    <rect x="170" y="514" width="260" height="6" fill="#f59e0b" opacity="0.8"/>
+
+    <!-- Collar Back -->
+    <path d="M210,135 Q300,165 390,135 L380,120 Q300,140 220,120 Z" fill="#1e3a8a"/>
+
+    <!-- Back Graphic: 100 Years Alumni Typography -->
+    <g transform="translate(300, 260)" text-anchor="middle">
+      <text y="0" font-family="sans-serif" font-size="34" font-weight="900" fill="url(#goldGradient)" letter-spacing="4">RB ALUMNI</text>
+      <text y="42" font-family="sans-serif" font-size="46" font-weight="900" fill="#ffffff" letter-spacing="6">100 YEARS</text>
+      <line x1="-120" y1="58" x2="120" y2="58" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+      <text y="82" font-family="sans-serif" font-size="16" font-weight="bold" fill="#94a3b8" letter-spacing="8">REUNION • FOREVER</text>
+      <text y="112" font-family="sans-serif" font-size="12" font-weight="semibold" fill="#f59e0b">คืนสู่เหย้า สายสัมพันธ์ 100 ปี</text>
+    </g>
+
+    <!-- Side Slits -->
+    <path d="M170,490 L170,520" stroke="#f59e0b" stroke-width="4"/>
+    <path d="M430,490 L430,520" stroke="#f59e0b" stroke-width="4"/>
+  </g>
+
+  <!-- Tagline Text -->
+  <text x="300" y="565" font-family="sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">เสื้อโปโลพรีเมียม (ด้านหลัง) • สกรีนลายทอง RB ALUMNI 100 YEARS</text>
+</svg>

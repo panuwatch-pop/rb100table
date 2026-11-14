@@ -20,7 +20,8 @@ import {
   ExternalLink,
   ShieldAlert,
   Save,
-  DollarSign
+  DollarSign,
+  Sparkles
 } from 'lucide-react';
 
 interface BookingModalProps {
@@ -51,6 +52,7 @@ export default function BookingModal({
   const [note, setNote] = useState('');
   const [paymentChoice, setPaymentChoice] = useState<'deposit' | 'full' | 'unpaid'>('deposit');
   const [customDeposit, setCustomDeposit] = useState<string>('1000');
+  const [isEarlyBird, setIsEarlyBird] = useState(true);
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
 
@@ -90,6 +92,7 @@ export default function BookingModal({
       setBookerPhone('');
       setBookerBatch('');
       setNote('');
+      setIsEarlyBird(table.price > 7000);
       setCustomDeposit(table.deposit_amount ? String(table.deposit_amount) : '1000');
       setPriceInput(String(table.price || 3000));
       setDepositInput(String(table.deposit_amount || 1000));
@@ -157,11 +160,13 @@ export default function BookingModal({
         }
       }
 
+      const effectivePrice = isEarlyBird ? 7000 : table.price;
+
       const depositAmountNum = paymentChoice === 'unpaid'
         ? 0
         : paymentChoice === 'deposit'
-          ? (Number(customDeposit) > 0 ? Number(customDeposit) : table.deposit_amount)
-          : table.price;
+          ? (Number(customDeposit) > 0 ? Number(customDeposit) : Math.min(table.deposit_amount, effectivePrice))
+          : effectivePrice;
 
       const paymentStatus = paymentChoice === 'full'
         ? 'fully_paid'
@@ -180,6 +185,8 @@ export default function BookingModal({
           note: note.trim() || null,
           payment_status: paymentStatus,
           deposit_amount: depositAmountNum,
+          custom_price: effectivePrice,
+          is_early_bird: isEarlyBird,
           slip_url: uploadedSlipUrl
         })
       });
@@ -559,6 +566,68 @@ export default function BookingModal({
                 ></textarea>
               </div>
 
+              {/* Promotional Table Pricing Selection */}
+              <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-950 text-xs">
+                    <Sparkles className="w-4 h-4 text-amber-600 animate-bounce" />
+                    <span>โปรโมชั่นพิเศษราคาค่าโต๊ะ</span>
+                  </div>
+                  {isEarlyBird && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500 text-white animate-pulse">
+                      ลดทันที 1,000 บ.
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEarlyBird(true);
+                      if (Number(customDeposit) > 7000) setCustomDeposit('7000');
+                    }}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isEarlyBird
+                        ? 'border-amber-500 bg-white ring-2 ring-amber-400/40 shadow-xs'
+                        : 'border-amber-200/60 bg-white/60 text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    <div className="font-bold text-amber-950 text-xs flex items-center justify-between">
+                      <span>โปรโมชั่น Early Bird</span>
+                      {isEarlyBird && <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />}
+                    </div>
+                    <div className="text-base font-black text-amber-600 mt-0.5">
+                      7,000 <span className="text-[11px] font-normal text-slate-500">บาท/โต๊ะ</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 line-through">
+                      จากราคาปกติ {table.price > 7000 ? table.price.toLocaleString() : '8,000'} บ.
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEarlyBird(false)}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      !isEarlyBird
+                        ? 'border-blue-500 bg-white ring-2 ring-blue-400/40 shadow-xs'
+                        : 'border-amber-200/60 bg-white/60 text-slate-600 hover:bg-white'
+                    }`}
+                  >
+                    <div className="font-bold text-slate-800 text-xs flex items-center justify-between">
+                      <span>ราคามาตรฐาน</span>
+                      {!isEarlyBird && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />}
+                    </div>
+                    <div className="text-base font-black text-slate-800 mt-0.5">
+                      {table.price.toLocaleString()} <span className="text-[11px] font-normal text-slate-500">บาท/โต๊ะ</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      ราคาตามผังงาน
+                    </div>
+                  </button>
+                </div>
+              </div>
+
               {/* Payment Option Selection */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-2">
@@ -582,7 +651,7 @@ export default function BookingModal({
                       0 บาท
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
-                      ยังไม่จ่ายมัดจำ (ค้างชำระ {table.price.toLocaleString()} บ.)
+                      ยังไม่จ่ายมัดจำ (ค้างชำระ {(isEarlyBird ? 7000 : table.price).toLocaleString()} บ.)
                     </div>
                   </button>
 
@@ -598,10 +667,10 @@ export default function BookingModal({
                   >
                     <div className="font-bold">ชำระเฉพาะมัดจำ</div>
                     <div className="text-blue-700 font-extrabold text-sm mt-0.5">
-                      {(Number(customDeposit) || table.deposit_amount).toLocaleString()} บาท
+                      {(Number(customDeposit) || Math.min(table.deposit_amount, isEarlyBird ? 7000 : table.price)).toLocaleString()} บาท
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
-                      คงเหลือ {Math.max(0, table.price - (Number(customDeposit) || table.deposit_amount)).toLocaleString()} บ. ชำระภายหลัง
+                      คงเหลือ {Math.max(0, (isEarlyBird ? 7000 : table.price) - (Number(customDeposit) || Math.min(table.deposit_amount, isEarlyBird ? 7000 : table.price))).toLocaleString()} บ. ชำระภายหลัง
                     </div>
                   </button>
 
@@ -617,7 +686,7 @@ export default function BookingModal({
                   >
                     <div className="font-bold">ชำระเต็มจำนวน (100%)</div>
                     <div className="text-emerald-700 font-extrabold text-sm mt-0.5">
-                      {table.price.toLocaleString()} บาท
+                      {(isEarlyBird ? 7000 : table.price).toLocaleString()} บาท
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
                       ไม่มียอดค้างชำระ
@@ -634,7 +703,7 @@ export default function BookingModal({
                         <span>ระบุจำนวนเงินมัดจำ (ไม่ฟิกยอดเงิน):</span>
                       </label>
                       <span className="text-[10px] text-slate-500">
-                        ขั้นต่ำ 1 บ. - สูงสุด {table.price.toLocaleString()} บ.
+                        ขั้นต่ำ 1 บ. - สูงสุด {(isEarlyBird ? 7000 : table.price).toLocaleString()} บ.
                       </span>
                     </div>
 
@@ -643,12 +712,13 @@ export default function BookingModal({
                       <input
                         type="number"
                         min="1"
-                        max={table.price}
+                        max={isEarlyBird ? 7000 : table.price}
                         value={customDeposit}
                         onChange={(e) => {
                           const val = e.target.value;
                           setCustomDeposit(val);
-                          if (Number(val) >= table.price) {
+                          const curLimit = isEarlyBird ? 7000 : table.price;
+                          if (Number(val) >= curLimit) {
                             setPaymentChoice('full');
                           }
                         }}
@@ -661,7 +731,7 @@ export default function BookingModal({
                     {/* Preset Buttons */}
                     <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
                       <span className="text-[10px] text-slate-500">เลือกด่วน:</span>
-                      {[500, 1000, 1500, 2000].filter(amt => amt < table.price).map(amt => (
+                      {[500, 1000, 1500, 2000].filter(amt => amt < (isEarlyBird ? 7000 : table.price)).map(amt => (
                         <button
                           key={amt}
                           type="button"
@@ -680,7 +750,7 @@ export default function BookingModal({
                     <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-blue-200/60 font-medium">
                       <span className="text-slate-600">ยอดคงเหลือชำระภายหลัง:</span>
                       <span className="font-bold text-rose-600">
-                        {Math.max(0, table.price - (Number(customDeposit) || 0)).toLocaleString()} บาท
+                        {Math.max(0, (isEarlyBird ? 7000 : table.price) - (Number(customDeposit) || 0)).toLocaleString()} บาท
                       </span>
                     </div>
                   </div>

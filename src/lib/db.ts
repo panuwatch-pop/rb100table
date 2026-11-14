@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import seedData from '@/data/tables_seed.json';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
-if (!fs.existsSync(DATA_DIR)) {
+if (!fs.existsSync(/*turbopackIgnore: true*/ DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
@@ -96,6 +96,39 @@ function initSchema(db: DatabaseSync) {
       details TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS shirt_types (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      price INTEGER NOT NULL DEFAULT 350,
+      image_front TEXT,
+      image_back TEXT,
+      sizes_json TEXT NOT NULL DEFAULT '["M","L","XL","2XL","3XL","4XL","5XL"]',
+      is_active INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS shirt_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_code TEXT UNIQUE NOT NULL,
+      customer_name TEXT NOT NULL,
+      customer_phone TEXT NOT NULL,
+      customer_batch TEXT,
+      delivery_type TEXT NOT NULL DEFAULT 'pickup',
+      delivery_address TEXT,
+      shipping_fee INTEGER NOT NULL DEFAULT 0,
+      items_json TEXT NOT NULL,
+      total_quantity INTEGER NOT NULL DEFAULT 1,
+      total_price INTEGER NOT NULL DEFAULT 0,
+      payment_status TEXT NOT NULL DEFAULT 'unpaid',
+      slip_url TEXT,
+      order_status TEXT NOT NULL DEFAULT 'pending',
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
 
   // Check if tables need seeding
@@ -149,6 +182,8 @@ function initSchema(db: DatabaseSync) {
     event_subtitle: 'ผังโต๊ะและการจองโต๊ะเข้าร่วมงาน',
     table_default_price: '3000',
     table_default_deposit: '1000',
+    early_bird_table_price: '7000',
+    shirt_shipping_fee: '50',
     promptpay_number: '0812345678',
     promptpay_name: 'บัญชีจัดงานเลี้ยงรุ่น',
     line_channel_access_token: '',
@@ -159,6 +194,38 @@ function initSchema(db: DatabaseSync) {
   const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
   for (const [key, value] of Object.entries(defaultSettings)) {
     insertSetting.run(key, value);
+  }
+
+  // Seed default shirt types if missing
+  const shirtCountRow = db.prepare('SELECT COUNT(*) as count FROM shirt_types').get() as { count: number };
+  if (shirtCountRow.count === 0) {
+    const insertShirt = db.prepare(`
+      INSERT INTO shirt_types (name, description, price, image_front, image_back, sizes_json, is_active, sort_order, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    const now = new Date().toISOString();
+    insertShirt.run(
+      'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)',
+      'ผ้า Dry-Tech เนื้อนุ่ม ทรงสวย ปักตราโรงเรียนด้านหน้า สกรีนลาย 100 ปี ด้านหลัง ใส่สบาย ไม่ร้อน',
+      450,
+      '/shirt_polo_front.svg',
+      '/shirt_polo_back.svg',
+      JSON.stringify(['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']),
+      1,
+      1,
+      now
+    );
+    insertShirt.run(
+      'เสื้อยืดคอกลม คืนสู่เหย้า 100 ปี (T-Shirt Classic)',
+      'ผ้า Cotton 100% Comb 32 สกรีนลายกราฟิกรุ่น 100 ปี ผ้านุ่มใส่สบาย ระบายเหงื่อได้ดีเยี่ยม',
+      300,
+      '/shirt_tshirt_front.svg',
+      '/shirt_tshirt_back.svg',
+      JSON.stringify(['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']),
+      1,
+      2,
+      now
+    );
   }
 }
 
@@ -265,6 +332,7 @@ export function createReservation(data: {
   deposit_paid?: number;
   remaining_balance?: number;
   slip_url?: string;
+  custom_price?: number;
 }) {
   const db = getDb();
   const table = getTableByNumber(data.table_number);
@@ -277,12 +345,12 @@ export function createReservation(data: {
 
   const now = new Date().toISOString();
   const paymentStatus = data.payment_status || 'unpaid';
-  const totalPrice = table.price;
+  const totalPrice = (data.custom_price && data.custom_price > 0) ? data.custom_price : table.price;
   
   // Customizable deposit amount: use provided deposit_amount if specified and > 0
   const depositRequired = (data.deposit_amount !== undefined && data.deposit_amount > 0)
     ? Math.min(data.deposit_amount, totalPrice)
-    : table.deposit_amount;
+    : Math.min(table.deposit_amount, totalPrice);
   
   let depositPaid = data.deposit_paid || 0;
   let remainingBalance = totalPrice - depositPaid;
@@ -327,6 +395,10 @@ export function createReservation(data: {
       now,
       now
     );
+
+    if (data.custom_price && data.custom_price > 0 && data.custom_price !== table.price) {
+      db.prepare('UPDATE tables SET price = ?, updated_at = ? WHERE id = ?').run(totalPrice, now, table.id);
+    }
 
     const updateTable = db.prepare(`
       UPDATE tables SET status = ?, updated_at = ? WHERE id = ?
@@ -646,4 +718,223 @@ export function updateSetting(key: string, value: string) {
 export function getActivityLogs(limit = 50) {
   const db = getDb();
   return db.prepare('SELECT * FROM activity_logs ORDER BY id DESC LIMIT ?').all(limit);
+}
+
+// Shirt System Types & Database Operations
+export interface ShirtType {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  image_front: string;
+  image_back: string;
+  sizes_json: string;
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+}
+
+export interface ShirtOrderItem {
+  shirt_type_id: number;
+  shirt_name: string;
+  size: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+}
+
+export interface ShirtOrder {
+  id: number;
+  order_code: string;
+  customer_name: string;
+  customer_phone: string;
+  customer_batch?: string | null;
+  delivery_type: 'pickup' | 'delivery';
+  delivery_address?: string | null;
+  shipping_fee: number;
+  items_json: string;
+  items?: ShirtOrderItem[];
+  total_quantity: number;
+  total_price: number;
+  payment_status: 'unpaid' | 'paid';
+  slip_url?: string | null;
+  order_status: 'pending' | 'confirmed' | 'shipping' | 'completed' | 'cancelled';
+  note?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export function getShirtTypes(): ShirtType[] {
+  const db = getDb();
+  return db.prepare('SELECT * FROM shirt_types WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all() as unknown as ShirtType[];
+}
+
+export function createShirtOrder(data: {
+  customer_name: string;
+  customer_phone: string;
+  customer_batch?: string;
+  delivery_type: 'pickup' | 'delivery';
+  delivery_address?: string;
+  shipping_fee?: number;
+  items: ShirtOrderItem[];
+  payment_status?: 'unpaid' | 'paid';
+  slip_url?: string;
+  note?: string;
+}): ShirtOrder {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const dateStr = new Date().toISOString().slice(2, 10).replace(/-/g, '');
+  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  const orderCode = `SHIRT-${dateStr}-${randomSuffix}`;
+
+  const totalQuantity = data.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+  const itemsSubtotal = data.items.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0);
+  const shippingFee = data.delivery_type === 'delivery' ? (Number(data.shipping_fee) || 50) : 0;
+  const totalPrice = itemsSubtotal + shippingFee;
+
+  db.exec('BEGIN TRANSACTION');
+  try {
+    const insert = db.prepare(`
+      INSERT INTO shirt_orders (
+        order_code, customer_name, customer_phone, customer_batch,
+        delivery_type, delivery_address, shipping_fee, items_json,
+        total_quantity, total_price, payment_status, slip_url,
+        order_status, note, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    insert.run(
+      orderCode,
+      data.customer_name.trim(),
+      data.customer_phone.trim(),
+      data.customer_batch ? data.customer_batch.trim() : null,
+      data.delivery_type,
+      data.delivery_type === 'delivery' ? (data.delivery_address || '').trim() : null,
+      shippingFee,
+      JSON.stringify(data.items),
+      totalQuantity,
+      totalPrice,
+      data.payment_status || 'unpaid',
+      data.slip_url || null,
+      'pending',
+      data.note ? data.note.trim() : null,
+      now,
+      now
+    );
+
+    db.prepare(`
+      INSERT INTO activity_logs (action, details, created_at)
+      VALUES (?, ?, ?)
+    `).run('SHIRT_ORDER_CREATED', `ออเดอร์เสื้อ ${orderCode} โดยคุณ ${data.customer_name} (${totalQuantity} ตัว รวม ${totalPrice} บ.)`, now);
+
+    db.exec('COMMIT');
+
+    const created = db.prepare('SELECT * FROM shirt_orders WHERE order_code = ?').get(orderCode) as unknown as ShirtOrder;
+    if (created && created.items_json) {
+      try {
+        created.items = JSON.parse(created.items_json);
+      } catch {
+        created.items = [];
+      }
+    }
+    return created;
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
+
+export function getAllShirtOrders(): ShirtOrder[] {
+  const db = getDb();
+  const rows = db.prepare('SELECT * FROM shirt_orders ORDER BY id DESC').all() as unknown as ShirtOrder[];
+  return rows.map(r => {
+    let parsedItems: ShirtOrderItem[] = [];
+    try {
+      if (r.items_json) parsedItems = JSON.parse(r.items_json);
+    } catch {}
+    return { ...r, items: parsedItems };
+  });
+}
+
+export function getShirtOrderSummary() {
+  const orders = getAllShirtOrders();
+  
+  const totalOrders = orders.length;
+  let totalShirts = 0;
+  let totalSales = 0;
+  let paidSales = 0;
+  let unpaidSales = 0;
+
+  const sizeCounts: Record<string, number> = {
+    M: 0,
+    L: 0,
+    XL: 0,
+    '2XL': 0,
+    '3XL': 0,
+    '4XL': 0,
+    '5XL': 0
+  };
+
+  const modelCounts: Record<string, number> = {};
+
+  for (const o of orders) {
+    if (o.order_status === 'cancelled') continue;
+    totalShirts += o.total_quantity;
+    totalSales += o.total_price;
+    if (o.payment_status === 'paid') {
+      paidSales += o.total_price;
+    } else {
+      unpaidSales += o.total_price;
+    }
+
+    if (o.items && Array.isArray(o.items)) {
+      for (const it of o.items) {
+        const sz = it.size;
+        const q = Number(it.quantity) || 0;
+        if (sz in sizeCounts) {
+          sizeCounts[sz] += q;
+        } else {
+          sizeCounts[sz] = (sizeCounts[sz] || 0) + q;
+        }
+
+        const modelName = it.shirt_name || 'เสื้อรุ่น';
+        modelCounts[modelName] = (modelCounts[modelName] || 0) + q;
+      }
+    }
+  }
+
+  return {
+    total_orders: totalOrders,
+    total_shirts: totalShirts,
+    total_sales: totalSales,
+    paid_sales: paidSales,
+    unpaid_sales: unpaidSales,
+    size_breakdown: sizeCounts,
+    model_breakdown: modelCounts
+  };
+}
+
+export function updateShirtOrderStatus(id: number, data: {
+  payment_status?: 'unpaid' | 'paid';
+  order_status?: 'pending' | 'confirmed' | 'shipping' | 'completed' | 'cancelled';
+}) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE shirt_orders
+    SET payment_status = COALESCE(?, payment_status),
+        order_status = COALESCE(?, order_status),
+        updated_at = ?
+    WHERE id = ?
+  `).run(data.payment_status || null, data.order_status || null, now, id);
+
+  return db.prepare('SELECT * FROM shirt_orders WHERE id = ?').get(id) as unknown as ShirtOrder;
+}
+
+export function cancelShirtOrder(id: number) {
+  const db = getDb();
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE shirt_orders SET order_status = 'cancelled', updated_at = ? WHERE id = ?`).run(now, id);
+  db.prepare('INSERT INTO activity_logs (action, details, created_at) VALUES (?, ?, ?)').run('SHIRT_ORDER_CANCELLED', `ยกเลิกออเดอร์เสื้อ #${id}`, now);
+  return true;
 }

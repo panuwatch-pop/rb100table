@@ -6,6 +6,7 @@ import FloorPlanViewer from '@/components/FloorPlanViewer';
 import TableView from '@/components/TableView';
 import BookingModal from '@/components/BookingModal';
 import AdminModal from '@/components/AdminModal';
+import ShirtShop from '@/components/ShirtShop';
 import { TableItem } from '@/lib/db';
 import initialSeedTables from '@/data/tables_seed.json';
 
@@ -39,7 +40,7 @@ export default function Home() {
     table_default_deposit: 1000
   });
 
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<'map' | 'list' | 'shirts'>('map');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
@@ -255,20 +256,24 @@ export default function Home() {
 
       {/* Main Content Area - Renders immediately with zero delay */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6">
-        {viewMode === 'map' ? (
+        {viewMode === 'map' && (
           <FloorPlanViewer
             tables={tables}
             selectedTable={selectedTable}
             onSelectTable={table => setSelectedTable(table)}
             searchQuery={searchQuery}
           />
-        ) : (
+        )}
+        {viewMode === 'list' && (
           <TableView
             tables={tables}
             onSelectTable={table => setSelectedTable(table)}
             onDeleteReservation={handleDeleteReservation}
             searchQuery={searchQuery}
           />
+        )}
+        {viewMode === 'shirts' && (
+          <ShirtShop onBackToMap={() => setViewMode('map')} />
         )}
       </main>
 

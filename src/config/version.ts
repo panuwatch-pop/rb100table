@@ -1,5 +1,5 @@
-export const APP_VERSION = 'v1.1.0';
-export const APP_RELEASE_DATE = '2026-11-08';
+export const APP_VERSION = 'v1.2.0';
+export const APP_RELEASE_DATE = '2026-11-14';
 
 export interface VersionHistoryItem {
   version: string;
@@ -8,6 +8,18 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.2.0',
+    date: '2026-11-14',
+    changes: [
+      'เพิ่มระบบสั่งจองเสื้อรุ่น (แยกแท็บเมนูใหม่บน Header) รองรับเสื้อหลายแบบ หลายราคา',
+      'รองรับไซส์ M, L, XL, 2XL, 3XL, 4XL, 5XL ราคาเดียวไม่มีบวกเพิ่ม',
+      'เพิ่มระบบดูรูปเสื้อรุ่น 2 มุมมอง (ภาพด้านหน้า และ ภาพด้านหลัง)',
+      'เพิ่มระบบเลือกรับเสื้อ: รับเองหน้างาน (ฟรี) หรือ จัดส่งพัสดุถึงบ้าน (+ค่าจัดส่ง)',
+      'เพิ่มระบบแอดมินจัดการออเดอร์เสื้อรุ่น สรุปยอดตัดเย็บส่งโรงงานแยกตามไซส์ และ Export Excel (CSV)',
+      'เพิ่มตัวเลือกราคาโปรโมชั่นค่าโต๊ะ Early Bird 7,000 บาท พร้อมระบุยอดมัดจำอิสระ'
+    ]
+  },
   {
     version: 'v1.1.0',
     date: '2026-11-08',

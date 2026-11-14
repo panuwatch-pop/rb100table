@@ -6,7 +6,18 @@ import { notifyNewBooking } from '@/lib/line';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { table_number, booker_name, booker_phone, booker_batch, note, payment_status, slip_url, deposit_amount } = body;
+    const { 
+      table_number, 
+      booker_name, 
+      booker_phone, 
+      booker_batch, 
+      note, 
+      payment_status, 
+      slip_url, 
+      deposit_amount,
+      custom_price,
+      is_early_bird
+    } = body;
 
     if (!table_number || !booker_name || !booker_phone) {
       return NextResponse.json(
@@ -30,13 +41,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const settings = getSettings();
+    const earlyBirdPrice = Number(settings.early_bird_table_price) || 7000;
+    const finalTablePrice = is_early_bird 
+      ? earlyBirdPrice 
+      : (custom_price && Number(custom_price) > 0 ? Number(custom_price) : table.price);
+
     // Flexible deposit amount
     const isUnpaid = payment_status === 'unpaid';
     const parsedDeposit = isUnpaid
       ? 0
       : (deposit_amount !== undefined && Number(deposit_amount) > 0)
-        ? Math.min(Number(deposit_amount), table.price)
-        : table.deposit_amount;
+        ? Math.min(Number(deposit_amount), finalTablePrice)
+        : Math.min(table.deposit_amount, finalTablePrice);
 
     const updatedTable = createReservation({
       table_number: Number(table_number),
@@ -47,17 +64,17 @@ export async function POST(req: NextRequest) {
       payment_status: payment_status || 'unpaid',
       deposit_amount: parsedDeposit,
       deposit_paid: isUnpaid ? 0 : undefined,
-      slip_url: slip_url || undefined
+      slip_url: slip_url || undefined,
+      custom_price: finalTablePrice
     });
 
-    const settings = getSettings();
     const promptpayTarget = settings.promptpay_number || '';
     let depositQR = '';
     let fullQR = '';
 
     if (promptpayTarget && !isUnpaid) {
       depositQR = await generatePromptPayQR(promptpayTarget, parsedDeposit || table.deposit_amount);
-      fullQR = await generatePromptPayQR(promptpayTarget, table.price);
+      fullQR = await generatePromptPayQR(promptpayTarget, finalTablePrice);
     }
 
     // Send LINE Notification asynchronously (non-blocking)
@@ -66,7 +83,7 @@ export async function POST(req: NextRequest) {
       bookerName: booker_name.trim(),
       bookerPhone: booker_phone.trim(),
       bookerBatch: booker_batch ? booker_batch.trim() : null,
-      totalPrice: table.price,
+      totalPrice: finalTablePrice,
       depositAmount: parsedDeposit,
       paymentStatus: payment_status || 'unpaid',
       note: note ? note.trim() : null

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tshirtWhiteBack" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <filter id="shadowTBack" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="600" height="600" rx="32" fill="#f8fafc"/>
+  
+  <!-- Badge Label -->
+  <rect x="36" y="32" width="120" height="32" rx="16" fill="#047857"/>
+  <text x="96" y="53" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">ภาพด้านหลัง</text>
+
+  <!-- T-Shirt Body Back -->
+  <g filter="url(#shadowTBack)">
+    <!-- Main Torso & Sleeves -->
+    <path d="M190,135 L125,200 L65,245 L110,305 L165,265 L170,520 L430,520 L435,265 L490,305 L535,245 L475,200 L410,135 C365,145 235,145 190,135 Z" fill="url(#tshirtWhiteBack)" stroke="#cbd5e1" stroke-width="2"/>
+    
+    <!-- Crew Neck Rib Back -->
+    <path d="M225,135 Q300,150 375,135 L365,128 Q300,138 235,128 Z" fill="#3b82f6" stroke="#2563eb" stroke-width="2"/>
+
+    <!-- Back Graphic -->
+    <g transform="translate(300, 270)" text-anchor="middle">
+      <text y="0" font-family="sans-serif" font-size="28" font-weight="900" fill="#1e3a8a" letter-spacing="4">WE ARE TOGETHER</text>
+      <text y="40" font-family="sans-serif" font-size="44" font-weight="900" fill="#2563eb" letter-spacing="6">100 YEARS</text>
+      <rect x="-90" y="56" width="180" height="4" rx="2" fill="#3b82f6"/>
+      <text y="88" font-family="sans-serif" font-size="14" font-weight="bold" fill="#64748b" letter-spacing="4">ONCE IN A LIFETIME</text>
+      <text y="116" font-family="sans-serif" font-size="12" font-weight="semibold" fill="#059669">รุ่นไหนๆ ก็หัวใจเดียวกัน</text>
+    </g>
+  </g>
+
+  <!-- Tagline Text -->
+  <text x="300" y="565" font-family="sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">เสื้อยืดคอกลมคลาสสิก (ด้านหลัง) • สกรีนลาย WE ARE TOGETHER 100 YEARS</text>
+</svg>

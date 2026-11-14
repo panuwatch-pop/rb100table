@@ -293,3 +293,107 @@ export async function testLineConnection() {
   };
   return sendLineMessage([textMessage]);
 }
+
+export async function notifyNewShirtOrder(data: {
+  orderCode: string;
+  customerName: string;
+  customerPhone: string;
+  customerBatch?: string | null;
+  deliveryType: 'pickup' | 'delivery';
+  deliveryAddress?: string | null;
+  itemsSummary: string;
+  totalQuantity: number;
+  totalPrice: number;
+  paymentStatus: 'unpaid' | 'paid';
+}) {
+  const isPaid = data.paymentStatus === 'paid';
+  const flexMessage = {
+    type: 'flex',
+    altText: `👕 มีการสั่งจองเสื้อรุ่นใหม่: ${data.orderCode} (${data.customerName})`,
+    contents: {
+      type: 'bubble',
+      size: 'mega',
+      header: {
+        type: 'box',
+        layout: 'vertical',
+        backgroundColor: '#0f172a',
+        paddingAll: '15px',
+        contents: [
+          {
+            type: 'text',
+            text: '👕 มีการสั่งจองเสื้อรุ่นใหม่!',
+            weight: 'bold',
+            color: '#fbbf24',
+            size: 'md'
+          },
+          {
+            type: 'text',
+            text: data.orderCode,
+            weight: 'bold',
+            color: '#ffffff',
+            size: 'xl',
+            margin: 'xs'
+          }
+        ]
+      },
+      body: {
+        type: 'box',
+        layout: 'vertical',
+        paddingAll: '15px',
+        spacing: 'sm',
+        contents: [
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '👤 ผู้สั่ง:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: `${data.customerName} (${data.customerPhone})`, weight: 'bold', color: '#1e293b', size: 'sm', flex: 7 }
+            ]
+          },
+          ...(data.customerBatch ? [{
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '🎓 รุ่น/ห้อง:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: data.customerBatch, color: '#334155', size: 'sm', flex: 7 }
+            ]
+          }] : []),
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '📦 รายการ:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: `${data.itemsSummary} (รวม ${data.totalQuantity} ตัว)`, color: '#1e293b', size: 'sm', flex: 7, wrap: true }
+            ]
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '🚚 การรับ:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: data.deliveryType === 'delivery' ? 'จัดส่งพัสดุถึงบ้าน' : 'รับเองหน้างานเลี้ยงรุ่น', color: '#0284c7', size: 'sm', flex: 7, weight: 'bold' }
+            ]
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '💰 ยอดรวม:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: `${data.totalPrice.toLocaleString()} บาท`, weight: 'bold', color: '#059669', size: 'sm', flex: 7 }
+            ]
+          },
+          {
+            type: 'box',
+            layout: 'horizontal',
+            contents: [
+              { type: 'text', text: '📊 การชำระ:', color: '#64748b', size: 'sm', flex: 3 },
+              { type: 'text', text: isPaid ? 'ชำระเงินเรียบร้อย' : 'รอชำระเงิน / จองไว้ก่อน', weight: 'bold', color: isPaid ? '#10b981' : '#f59e0b', size: 'sm', flex: 7 }
+            ]
+          }
+        ]
+      }
+    }
+  };
+
+  return sendLineMessage([flexMessage]);
+}

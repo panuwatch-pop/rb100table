@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="100%" height="100%">
+  <defs>
+    <linearGradient id="tshirtWhite" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="60%" stop-color="#f1f5f9"/>
+      <stop offset="100%" stop-color="#e2e8f0"/>
+    </linearGradient>
+    <linearGradient id="blueGraphic" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb"/>
+      <stop offset="100%" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <filter id="shadowT" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+
+  <!-- Background Card -->
+  <rect width="600" height="600" rx="32" fill="#f8fafc"/>
+  
+  <!-- Badge Label -->
+  <rect x="36" y="32" width="120" height="32" rx="16" fill="#1e3a8a"/>
+  <text x="96" y="53" font-family="sans-serif" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">ภาพด้านหน้า</text>
+
+  <!-- T-Shirt Body -->
+  <g filter="url(#shadowT)">
+    <!-- Main Torso & Sleeves -->
+    <path d="M190,135 L125,200 L65,245 L110,305 L165,265 L170,520 L430,520 L435,265 L490,305 L535,245 L475,200 L410,135 C365,150 235,150 190,135 Z" fill="url(#tshirtWhite)" stroke="#cbd5e1" stroke-width="2"/>
+    
+    <!-- Crew Neck Rib -->
+    <path d="M225,135 C245,175 355,175 375,135 C350,150 250,150 225,135 Z" fill="#3b82f6" stroke="#2563eb" stroke-width="3"/>
+
+    <!-- Front Center Graphic: Modern 100 Year Emblem -->
+    <g transform="translate(300, 290)" text-anchor="middle">
+      <rect x="-80" y="-80" width="160" height="160" rx="28" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
+      <circle cx="0" cy="-15" r="38" fill="url(#blueGraphic)"/>
+      <text y="-5" font-family="sans-serif" font-size="28" font-weight="900" fill="#ffffff">100</text>
+      <text y="38" font-family="sans-serif" font-size="16" font-weight="900" fill="#1e3a8a" letter-spacing="3">RB ALUMNI</text>
+      <text y="58" font-family="sans-serif" font-size="11" font-weight="bold" fill="#64748b">REUNION CELEBRATION</text>
+    </g>
+  </g>
+
+  <!-- Tagline Text -->
+  <text x="300" y="565" font-family="sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">เสื้อยืดคอกลมคลาสสิก (ด้านหน้า) • สกรีนโลโก้โมเดิร์น 100 ปี</text>
+</svg>
