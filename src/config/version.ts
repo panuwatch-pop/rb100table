@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.2.1';
+export const APP_VERSION = 'v1.2.2';
 export const APP_RELEASE_DATE = '2026-11-15';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,14 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.2.2',
+    date: '2026-11-15',
+    changes: [
+      'แก้ไขบั๊กหน้าแดชบอร์ดแอดมินแท็บออเดอร์เสื้อรุ่น ป้องกัน Client Error จากค่าฟิลด์สรุปยอด total_sales / total_revenue',
+      'เพิ่มการตรวจสอบและ fallback ค่าข้อมูลในตารางออเดอร์เสื้อรุ่นให้ปลอดภัย 100%'
+    ]
+  },
   {
     version: 'v1.2.1',
     date: '2026-11-15',

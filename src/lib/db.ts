@@ -907,9 +907,11 @@ export function getShirtOrderSummary() {
     total_orders: totalOrders,
     total_shirts: totalShirts,
     total_sales: totalSales,
+    total_revenue: totalSales,
     paid_sales: paidSales,
     unpaid_sales: unpaidSales,
     size_breakdown: sizeCounts,
+    size_summary: sizeCounts,
     model_breakdown: modelCounts
   };
 }

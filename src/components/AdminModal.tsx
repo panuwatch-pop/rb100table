@@ -83,12 +83,16 @@ export default function AdminModal({
     total_orders: number;
     total_shirts: number;
     total_revenue: number;
+    total_sales?: number;
     size_summary: Record<string, number>;
+    size_breakdown?: Record<string, number>;
   }>({
     total_orders: 0,
     total_shirts: 0,
     total_revenue: 0,
-    size_summary: {}
+    total_sales: 0,
+    size_summary: {},
+    size_breakdown: {}
   });
   const [shirtLoading, setShirtLoading] = useState(false);
   const [shirtSearchQuery, setShirtSearchQuery] = useState('');
@@ -111,11 +115,12 @@ export default function AdminModal({
       const data = await res.json();
       if (data.success && data.data) {
         setShirtOrders(data.data.orders || []);
-        setShirtSummary(data.data.summary || {
-          total_orders: 0,
-          total_shirts: 0,
-          total_revenue: 0,
-          size_summary: {}
+        const s = data.data.summary || {};
+        setShirtSummary({
+          total_orders: s.total_orders || 0,
+          total_shirts: s.total_shirts || 0,
+          total_revenue: s.total_revenue || s.total_sales || 0,
+          size_summary: s.size_summary || s.size_breakdown || {}
         });
       }
     } catch (err) {
@@ -830,19 +835,19 @@ export default function AdminModal({
                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
                       <span className="text-slate-500 text-[11px]">ยอดคำสั่งซื้อทั้งหมด</span>
                       <div className="text-base font-bold text-indigo-700 mt-0.5">
-                        {shirtSummary.total_orders} รายการ
+                        {shirtSummary?.total_orders ?? 0} รายการ
                       </div>
                     </div>
                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
                       <span className="text-slate-500 text-[11px]">จำนวนเสื้อทั้งหมด</span>
                       <div className="text-base font-bold text-blue-700 mt-0.5">
-                        {shirtSummary.total_shirts} ตัว
+                        {shirtSummary?.total_shirts ?? 0} ตัว
                       </div>
                     </div>
                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
                       <span className="text-slate-500 text-[11px]">ยอดเงินรวมทั้งหมด</span>
                       <div className="text-base font-bold text-emerald-700 mt-0.5">
-                        {shirtSummary.total_revenue.toLocaleString()} บาท
+                        {((shirtSummary?.total_revenue ?? shirtSummary?.total_sales) ?? 0).toLocaleString()} บาท
                       </div>
                     </div>
                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
@@ -866,7 +871,7 @@ export default function AdminModal({
                         <span>สรุปยอดจำนวนเสื้อแยกตามไซส์ (สำหรับส่งโรงงานตัดเย็บ):</span>
                       </div>
                       <span className="text-[11px] text-indigo-700 font-semibold">
-                        รวมทั้งสิ้น {shirtSummary.total_shirts} ตัว
+                        รวมทั้งสิ้น {shirtSummary?.total_shirts ?? 0} ตัว
                       </span>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
@@ -877,7 +882,7 @@ export default function AdminModal({
                         >
                           <span className="font-bold text-slate-700 text-xs">{sz}</span>
                           <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-800 rounded font-black text-xs">
-                            {shirtSummary.size_summary?.[sz] || 0}
+                            {shirtSummary?.size_summary?.[sz] ?? shirtSummary?.size_breakdown?.[sz] ?? 0}
                           </span>
                           <span className="text-[10px] text-slate-400">ตัว</span>
                         </div>
@@ -980,13 +985,13 @@ export default function AdminModal({
                                       </div>
                                     ))}
                                     <div className="text-[10px] text-slate-400 pt-0.5 border-t border-slate-100">
-                                      รวม {o.total_quantity} ตัว
-                                      {o.shipping_fee > 0 && ` • ค่าส่ง ${o.shipping_fee} บ.`}
+                                      รวม {o.total_quantity || 0} ตัว
+                                      {(o.shipping_fee || 0) > 0 && ` • ค่าส่ง ${o.shipping_fee} บ.`}
                                     </div>
                                   </div>
                                 </td>
                                 <td className="py-3 px-3 text-right font-bold text-slate-900">
-                                  {o.total_price.toLocaleString()} บ.
+                                  {(o.total_price || 0).toLocaleString()} บ.
                                 </td>
                                 <td className="py-3 px-3 text-center">
                                   {o.slip_url ? (
