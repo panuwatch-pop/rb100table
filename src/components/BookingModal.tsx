@@ -474,23 +474,23 @@ export default function BookingModal({
 
           {/* PromptPay QR Code Display after Booking */}
           {qrCodeUrl && (
-            <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl text-center space-y-2.5">
+            <div className="p-4 bg-gradient-to-b from-sky-50 to-blue-50 border border-blue-200 rounded-2xl text-center space-y-2.5">
               <div className="font-bold text-blue-900 text-sm flex items-center justify-center gap-1.5">
                 <QrCode className="w-4 h-4 text-blue-700" />
                 <span>สแกน QR Code พร้อมเพย์เพื่อชำระเงิน</span>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={qrCodeUrl}
-                alt="PromptPay QR Code"
-                className="w-48 h-48 mx-auto rounded-xl shadow-md border border-slate-200 bg-white p-1"
+                src="/krungthai_qr.jpg"
+                alt="PromptPay QR Code ธนาคารกรุงไทย"
+                className="w-56 h-auto mx-auto rounded-xl shadow-md border border-slate-200 bg-white p-1"
               />
-              <div className="text-xs text-slate-600">
-                พร้อมเพย์: <strong className="text-slate-900">{promptpayNumber}</strong>
-                {promptpayName && <span> ({promptpayName})</span>}
+              <div className="text-xs text-slate-700 space-y-0.5">
+                <div>ชื่อบัญชี: <strong className="text-slate-900 font-bold">นาย ศุภชัย พร้อมจิตต์</strong></div>
+                <div>พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)</div>
               </div>
-              <p className="text-[11px] text-slate-500">
-                ระบบส่งการแจ้งเตือนเข้ากลุ่ม LINE เรียบร้อยแล้วครับ
+              <p className="text-[11px] text-emerald-600 font-semibold">
+                ✓ บันทึกการจองและส่งการแจ้งเตือนเข้ากลุ่ม LINE เรียบร้อยแล้วครับ
               </p>
             </div>
           )}
@@ -756,6 +756,49 @@ export default function BookingModal({
                   </div>
                 )}
               </div>
+
+              {/* Official Krungthai Bank PromptPay QR Card */}
+              {paymentChoice !== 'unpaid' && (
+                <div className="p-3.5 bg-gradient-to-b from-sky-50 to-blue-50 border border-blue-200 rounded-2xl text-center space-y-2.5 animate-in fade-in">
+                  <div className="flex items-center justify-between">
+                    <span className="font-extrabold text-blue-950 text-xs flex items-center gap-1.5">
+                      <QrCode className="w-4 h-4 text-blue-600" />
+                      <span>สแกน QR Code พร้อมเพย์เพื่อชำระเงิน</span>
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white">
+                      {paymentChoice === 'full' ? 'ชำระเต็มจำนวน' : 'ชำระมัดจำ'}
+                    </span>
+                  </div>
+
+                  <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[220px] mx-auto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/krungthai_qr.jpg"
+                      alt="PromptPay QR Code ธนาคารกรุงไทย"
+                      className="w-full h-auto object-contain rounded-lg"
+                    />
+                  </div>
+
+                  <div className="space-y-0.5 text-xs">
+                    <div className="font-extrabold text-blue-950">
+                      ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
+                    </div>
+                    <div className="text-[11px] text-slate-600">
+                      พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                    </div>
+                    <div className="pt-0.5 text-sm font-black text-blue-700">
+                      ยอดที่ต้องโอน: {paymentChoice === 'full'
+                        ? (isEarlyBird ? 7000 : table.price).toLocaleString()
+                        : (Number(customDeposit) || Math.min(table.deposit_amount, isEarlyBird ? 7000 : table.price)).toLocaleString()
+                      } บาท
+                    </div>
+                  </div>
+
+                  <p className="text-[10px] text-slate-500">
+                    * เมื่อโอนเงินแล้ว กรุณาแนบสลิปด้านล่างเพื่อยืนยันการจองโต๊ะ
+                  </p>
+                </div>
+              )}
 
               {/* Slip Upload Option */}
               <div>

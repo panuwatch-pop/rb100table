@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TableItem } from '@/lib/db';
 import { APP_VERSION } from '@/config/version';
+import ShirtModelsManager from '@/components/ShirtModelsManager';
 import { 
   X, 
   ShieldCheck, 
@@ -26,7 +27,10 @@ import {
   Truck,
   MapPin,
   Eye,
-  Package
+  Package,
+  Camera,
+  PlusCircle,
+  Save
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -96,6 +100,10 @@ export default function AdminModal({
   });
   const [shirtLoading, setShirtLoading] = useState(false);
   const [shirtSearchQuery, setShirtSearchQuery] = useState('');
+  const [shirtSubTab, setShirtSubTab] = useState<'orders' | 'models'>('orders');
+  const [adminShirtTypes, setAdminShirtTypes] = useState<any[]>([]);
+  const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
+  const [uploadingImageKey, setUploadingImageKey] = useState<string | null>(null);
 
   // Settings Form State
   const [settings, setSettings] = useState<Record<string, string>>({});
@@ -130,11 +138,114 @@ export default function AdminModal({
     }
   };
 
+  const fetchShirtTypesAdmin = async () => {
+    setShirtTypesLoading(true);
+    try {
+      const res = await fetch(`/api/admin/shirts/types?t=${Date.now()}`);
+      const data = await res.json();
+      if (data.success && data.data) {
+        setAdminShirtTypes(data.data.shirt_types || []);
+      }
+    } catch (err) {
+      console.error('Fetch shirt types error:', err);
+    } finally {
+      setShirtTypesLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isAdmin && isOpen && activeTab === 'shirts') {
       fetchShirtOrders();
+      fetchShirtTypesAdmin();
     }
   }, [isAdmin, isOpen, activeTab]);
+
+  const handleUploadShirtImage = async (shirtId: number, side: 'front' | 'back', file: File) => {
+    const key = `${shirtId}-${side}`;
+    setUploadingImageKey(key);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'shirts');
+      const upRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const upData = await upRes.json();
+      if (!upData.success) throw new Error(upData.error || 'อัปโหลดรูปภาพไม่สำเร็จ');
+
+      const updatePayload = side === 'front' ? { image_front: upData.url } : { image_back: upData.url };
+      const res = await fetch(`/api/admin/shirts/types/${shirtId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatePayload)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+
+      fetchShirtTypesAdmin();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ');
+    } finally {
+      setUploadingImageKey(null);
+    }
+  };
+
+  const handleSaveShirtModel = async (shirtId: number, name: string, price: number, description: string, isActive: number) => {
+    try {
+      const res = await fetch(`/api/admin/shirts/types/${shirtId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, price, description, is_active: isActive })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      alert('บันทึกข้อมูลแบบเสื้อเรียบร้อยแล้ว');
+      fetchShirtTypesAdmin();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาด');
+    }
+  };
+
+  const handleCreateShirtModel = async () => {
+    const name = prompt('กรอกชื่อแบบเสื้อรุ่นใหม่:');
+    if (!name || !name.trim()) return;
+    const priceStr = prompt('กำหนดราคาเสื้อ (บาท):', '350');
+    if (!priceStr) return;
+    const price = parseInt(priceStr, 10);
+    if (isNaN(price) || price <= 0) {
+      alert('กรุณาระบุราคาตัวเลขที่ถูกต้อง');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/shirts/types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), price })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      alert('เพิ่มแบบเสื้อรุ่นใหม่เรียบร้อยแล้ว คุณสามารถอัปโหลดรูปภาพได้ทันที');
+      fetchShirtTypesAdmin();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาด');
+    }
+  };
+
+  const handleDeleteShirtModel = async (shirtId: number, shirtName: string) => {
+    if (!confirm(`คุณต้องการลบแบบเสื้อ "${shirtName}" ใช่หรือไม่?`)) return;
+    try {
+      const res = await fetch(`/api/admin/shirts/types/${shirtId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error);
+      fetchShirtTypesAdmin();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาด');
+    }
+  };
 
   const handleUpdateShirtStatus = async (orderId: number, status: string, paymentStatus?: string) => {
     try {
@@ -828,9 +939,53 @@ export default function AdminModal({
                   )}
                 </div>
               ) : activeTab === 'shirts' ? (
-                /* TAB 2: SHIRT ORDERS MANAGEMENT */
+                /* TAB 2: SHIRT ORDERS & MODELS MANAGEMENT */
                 <div className="space-y-4">
-                  {/* Summary Cards */}
+                  {/* Shirt Sub-tabs: Orders vs Models & Pictures */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShirtSubTab('orders')}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                          shirtSubTab === 'orders'
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        <Package className="w-3.5 h-3.5" />
+                        <span>รายการออเดอร์ ({shirtOrders?.length || 0})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setShirtSubTab('models')}
+                        className={`px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer ${
+                          shirtSubTab === 'models'
+                            ? 'bg-indigo-600 text-white shadow-xs'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        }`}
+                      >
+                        <Shirt className="w-3.5 h-3.5" />
+                        <span>จัดการแบบเสื้อและรูปภาพ ({adminShirtTypes?.length || 0})</span>
+                      </button>
+                    </div>
+
+                    {shirtSubTab === 'models' && (
+                      <button
+                        type="button"
+                        onClick={handleCreateShirtModel}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                      >
+                        <PlusCircle className="w-3.5 h-3.5" />
+                        <span>เพิ่มแบบเสื้อใหม่</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {shirtSubTab === 'orders' ? (
+                    <>
+                      {/* Summary Cards */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                     <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs">
                       <span className="text-slate-500 text-[11px]">ยอดคำสั่งซื้อทั้งหมด</span>
@@ -1062,8 +1217,20 @@ export default function AdminModal({
                       </table>
                     </div>
                   </div>
-                </div>
+                </>
               ) : (
+                <ShirtModelsManager
+                  shirtTypes={adminShirtTypes}
+                  uploadingKey={uploadingImageKey}
+                  onUploadImage={handleUploadShirtImage}
+                  onSaveModel={handleSaveShirtModel}
+                  onDeleteModel={handleDeleteShirtModel}
+                  onRefresh={fetchShirtTypesAdmin}
+                  loading={shirtTypesLoading}
+                />
+              )}
+            </div>
+          ) : (
                 /* TAB 3: SETTINGS & CONFIGURATION */
                 <form onSubmit={handleSaveSettings} className="max-w-2xl space-y-4 text-xs">
                   {settingsMsg && (

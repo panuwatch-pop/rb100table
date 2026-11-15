@@ -622,21 +622,51 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                 </div>
 
                 {paymentChoice === 'paid' && (
-                  <div className="mt-2 p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2 animate-in fade-in">
-                    <label className="block font-semibold text-emerald-900 text-[11px]">
-                      แนบสลิปโอนเงิน (ถ้ามี หรือสแกน QR ในขั้นตอนถัดไป)
-                    </label>
-                    <label className="border border-dashed border-emerald-300 hover:border-emerald-500 rounded-lg p-2.5 flex items-center justify-center gap-2 cursor-pointer bg-white text-xs text-slate-600">
-                      <Upload className="w-4 h-4 text-emerald-600" />
-                      <span>{slipFile ? slipFile.name : 'เลือกรูปสลิป'}</span>
-                      <input type="file" accept="image/*" onChange={handleSlipChange} className="hidden" />
-                    </label>
-                    {slipPreview && (
-                      <div className="text-center pt-1">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={slipPreview} alt="Slip" className="w-24 h-24 object-cover mx-auto rounded border" />
+                  <div className="mt-2 p-3.5 bg-gradient-to-b from-sky-50 to-blue-50 rounded-2xl border border-blue-200 space-y-2.5 animate-in fade-in">
+                    <div className="flex items-center justify-between">
+                      <span className="font-extrabold text-blue-950 text-xs flex items-center gap-1.5">
+                        <QrCode className="w-4 h-4 text-blue-600" />
+                        <span>สแกน QR Code พร้อมเพย์เพื่อชำระเงิน</span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white">
+                        ยอดชำระ {grandTotal.toLocaleString()} บ.
+                      </span>
+                    </div>
+
+                    <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[200px] mx-auto text-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/krungthai_qr.jpg"
+                        alt="PromptPay QR Code ธนาคารกรุงไทย"
+                        className="w-full h-auto object-contain rounded-lg"
+                      />
+                    </div>
+
+                    <div className="text-center space-y-0.5 text-xs">
+                      <div className="font-extrabold text-blue-950">
+                        ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
                       </div>
-                    )}
+                      <div className="text-[11px] text-slate-600">
+                        พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                      </div>
+                    </div>
+
+                    <div className="pt-1 border-t border-blue-200/60">
+                      <label className="block font-semibold text-blue-950 text-[11px] mb-1">
+                        แนบสลิปโอนเงิน (ถ้ามี)
+                      </label>
+                      <label className="border border-dashed border-blue-300 hover:border-blue-500 rounded-lg p-2 flex items-center justify-center gap-2 cursor-pointer bg-white text-xs text-slate-600">
+                        <Upload className="w-4 h-4 text-blue-600" />
+                        <span>{slipFile ? slipFile.name : 'คลิกเพื่อเลือกไฟล์รูปสลิป'}</span>
+                        <input type="file" accept="image/*" onChange={handleSlipChange} className="hidden" />
+                      </label>
+                      {slipPreview && (
+                        <div className="text-center pt-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={slipPreview} alt="Slip" className="w-24 h-24 object-cover mx-auto rounded border" />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -782,16 +812,27 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
 
             {/* PromptPay QR Code if paid */}
             {qrCodeUrl && (
-              <div className="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl text-center space-y-2">
+              <div className="p-4 bg-gradient-to-b from-sky-50 to-blue-50 border border-blue-200 rounded-2xl text-center space-y-2.5">
                 <div className="font-bold text-blue-900 text-xs flex items-center justify-center gap-1.5">
                   <QrCode className="w-4 h-4 text-blue-700" />
                   <span>สแกน QR Code พร้อมเพย์เพื่อชำระเงิน</span>
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qrCodeUrl} alt="PromptPay QR" className="w-40 h-40 mx-auto rounded-xl border bg-white p-1" />
-                <p className="text-[11px] text-slate-500">
-                  พร้อมเพย์: {promptpayNumber} {promptpayName ? `(${promptpayName})` : ''}
-                </p>
+                <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[200px] mx-auto text-center">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/krungthai_qr.jpg"
+                    alt="PromptPay QR Code ธนาคารกรุงไทย"
+                    className="w-full h-auto object-contain rounded-lg"
+                  />
+                </div>
+                <div className="text-center space-y-0.5 text-xs text-slate-700">
+                  <div className="font-extrabold text-blue-950">
+                    ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
+                  </div>
+                  <div className="text-[11px] text-slate-600">
+                    พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                  </div>
+                </div>
               </div>
             )}
 

@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'slips');
+    const folder = (formData.get('folder') as string) === 'shirts' ? 'shirts' : 'slips';
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', folder);
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
     const filePath = path.join(uploadsDir, safeFilename);
     fs.writeFileSync(filePath, buffer);
 
-    const fileUrl = `/uploads/slips/${safeFilename}`;
+    const fileUrl = `/uploads/${folder}/${safeFilename}`;
 
     return NextResponse.json({
       success: true,

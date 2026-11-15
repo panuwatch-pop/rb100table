@@ -207,7 +207,7 @@ function initSchema(db: DatabaseSync) {
     insertShirt.run(
       'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)',
       'ผ้า Dry-Tech เนื้อนุ่ม ทรงสวย ปักตราโรงเรียนด้านหน้า สกรีนลาย 100 ปี ด้านหลัง ใส่สบาย ไม่ร้อน',
-      450,
+      300,
       '/shirt_polo_front.svg',
       '/shirt_polo_back.svg',
       JSON.stringify(['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']),
@@ -767,6 +767,75 @@ export interface ShirtOrder {
 export function getShirtTypes(): ShirtType[] {
   const db = getDb();
   return db.prepare('SELECT * FROM shirt_types WHERE is_active = 1 ORDER BY sort_order ASC, id ASC').all() as unknown as ShirtType[];
+}
+
+export function getAllShirtTypesAdmin(): ShirtType[] {
+  const db = getDb();
+  return db.prepare('SELECT * FROM shirt_types ORDER BY sort_order ASC, id ASC').all() as unknown as ShirtType[];
+}
+
+export function createShirtType(data: {
+  name: string;
+  description?: string;
+  price: number;
+  image_front?: string;
+  image_back?: string;
+  sizes_json?: string;
+  is_active?: number;
+}): ShirtType {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const defaultSizes = JSON.stringify(['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL']);
+  const result = db.prepare(`
+    INSERT INTO shirt_types (name, description, price, image_front, image_back, sizes_json, is_active, sort_order, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)
+  `).run(
+    data.name,
+    data.description || '',
+    data.price || 350,
+    data.image_front || '/shirt_polo_front.svg',
+    data.image_back || '/shirt_polo_back.svg',
+    data.sizes_json || defaultSizes,
+    data.is_active ?? 1,
+    now
+  );
+  return db.prepare('SELECT * FROM shirt_types WHERE id = ?').get(result.lastInsertRowid) as unknown as ShirtType;
+}
+
+export function updateShirtType(id: number, data: {
+  name?: string;
+  description?: string;
+  price?: number;
+  image_front?: string;
+  image_back?: string;
+  sizes_json?: string;
+  is_active?: number;
+  sort_order?: number;
+}): ShirtType {
+  const db = getDb();
+  const current = db.prepare('SELECT * FROM shirt_types WHERE id = ?').get(id) as any;
+  if (!current) throw new Error(`ไม่พบแบบเสื้อ ID ${id}`);
+
+  const name = data.name !== undefined ? data.name : current.name;
+  const description = data.description !== undefined ? data.description : current.description;
+  const price = data.price !== undefined ? data.price : current.price;
+  const imageFront = data.image_front !== undefined ? data.image_front : current.image_front;
+  const imageBack = data.image_back !== undefined ? data.image_back : current.image_back;
+  const isActive = data.is_active !== undefined ? data.is_active : current.is_active;
+  const sortOrder = data.sort_order !== undefined ? data.sort_order : current.sort_order;
+
+  db.prepare(`
+    UPDATE shirt_types
+    SET name = ?, description = ?, price = ?, image_front = ?, image_back = ?, is_active = ?, sort_order = ?
+    WHERE id = ?
+  `).run(name, description, price, imageFront, imageBack, isActive, sortOrder, id);
+
+  return db.prepare('SELECT * FROM shirt_types WHERE id = ?').get(id) as unknown as ShirtType;
+}
+
+export function deleteShirtType(id: number) {
+  const db = getDb();
+  db.prepare('DELETE FROM shirt_types WHERE id = ?').run(id);
 }
 
 export function createShirtOrder(data: {

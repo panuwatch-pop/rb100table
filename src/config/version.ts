@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.2.2';
+export const APP_VERSION = 'v1.3.0';
 export const APP_RELEASE_DATE = '2026-11-15';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.0',
+    date: '2026-11-15',
+    changes: [
+      'แนบรูป QR Code พร้อมเพย์ทางการ ธนาคารกรุงไทย (นาย ศุภชัย พร้อมจิตต์ 3101500616030) ในระบบจองโต๊ะและสั่งซื้อเสื้อรุ่น',
+      'ปรับราคาเสื้อรุ่นทั้ง 2 แบบ (เสื้อโปโล และ เสื้อยืด) เป็นราคาตัวละ 300 บาทเท่ากัน',
+      'เพิ่มระบบจัดการแบบเสื้อและรูปภาพในหน้าแอดมิน (สามารถอัปโหลดภาพด้านหน้า-หลัง, ปรับราคา และเปิด/ปิดการจำหน่าย)'
+    ]
+  },
   {
     version: 'v1.2.2',
     date: '2026-11-15',
