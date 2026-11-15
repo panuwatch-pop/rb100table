@@ -684,12 +684,12 @@ export default function BookingModal({
                         : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
-                    <div className="font-bold">ชำระเต็มจำนวน (100%)</div>
+                    <div className="font-bold">ชำระเต็มจำนวน (ซื้อเลย 100%)</div>
                     <div className="text-emerald-700 font-extrabold text-sm mt-0.5">
                       {(isEarlyBird ? 7000 : table.price).toLocaleString()} บาท
                     </div>
                     <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
-                      ไม่มียอดค้างชำระ
+                      ซื้อขาด ไม่ต้องมัดจำ ไม่มียอดค้าง
                     </div>
                   </button>
                 </div>
@@ -792,7 +792,13 @@ export default function BookingModal({
                 disabled={loading}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all text-sm disabled:opacity-50 cursor-pointer"
               >
-                {loading ? 'กำลังบันทึกการจอง...' : 'ยืนยันการจองโต๊ะ'}
+                {loading
+                  ? 'กำลังบันทึกข้อมูล...'
+                  : paymentChoice === 'full'
+                  ? `💳 ยืนยันการสั่งซื้อและชำระเต็มจำนวน (${(isEarlyBird ? 7000 : table.price).toLocaleString()} บาท)`
+                  : paymentChoice === 'deposit'
+                  ? `📝 ยืนยันการจองโต๊ะ (ชำระมัดจำ ${(Number(customDeposit) || Math.min(table.deposit_amount, isEarlyBird ? 7000 : table.price)).toLocaleString()} บาท)`
+                  : '📝 ยืนยันการจองโต๊ะ (ยังไม่จ่ายมัดจำ)'}
               </button>
             </form>
           )}

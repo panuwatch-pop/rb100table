@@ -109,7 +109,7 @@ export default function Navbar({
                 }`}
               >
                 <Shirt className="w-3.5 h-3.5" />
-                <span>สั่งจองเสื้อรุ่น</span>
+                <span>สั่งซื้อ / จองเสื้อ</span>
               </button>
             </div>
 

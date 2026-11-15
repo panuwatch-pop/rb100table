@@ -1,5 +1,5 @@
-export const APP_VERSION = 'v1.2.0';
-export const APP_RELEASE_DATE = '2026-11-14';
+export const APP_VERSION = 'v1.2.1';
+export const APP_RELEASE_DATE = '2026-11-15';
 
 export interface VersionHistoryItem {
   version: string;
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.2.1',
+    date: '2026-11-15',
+    changes: [
+      'ปรับปรุงข้อความและปุ่มตัวเลือก "ซื้อเลย (ชำระทันที)" และ "จองไว้ก่อน (ชำระภายหลัง)" ให้แยกแยะชัดเจน',
+      'ปรับปุ่มยืนยันคำสั่งซื้อให้แสดงยอดเงินและข้อความสอดคล้องกับรูปแบบการชำระเงิน',
+      'ปรับชื่อเมนูบน Navbar เป็น "สั่งซื้อ / จองเสื้อ" เพื่อความชัดเจนสำหรับผู้ที่ต้องการซื้อทันที'
+    ]
+  },
   {
     version: 'v1.2.0',
     date: '2026-11-14',

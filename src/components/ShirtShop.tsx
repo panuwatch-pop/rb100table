@@ -55,7 +55,7 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
   const [deliveryType, setDeliveryType] = useState<'pickup' | 'delivery'>('pickup');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [note, setNote] = useState('');
-  const [paymentChoice, setPaymentChoice] = useState<'unpaid' | 'paid'>('unpaid');
+  const [paymentChoice, setPaymentChoice] = useState<'unpaid' | 'paid'>('paid');
   const [slipFile, setSlipFile] = useState<File | null>(null);
   const [slipPreview, setSlipPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -581,40 +581,50 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
               {/* Payment Choice */}
               <div className="space-y-2 pt-2 border-t border-slate-100 text-xs">
                 <label className="block font-bold text-slate-800">
-                  ตัวเลือกการชำระเงิน <span className="text-rose-500">*</span>
+                  รูปแบบการสั่งซื้อ / ชำระเงิน <span className="text-rose-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentChoice('unpaid')}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
-                      paymentChoice === 'unpaid'
-                        ? 'border-amber-600 bg-amber-50/70 text-amber-950 ring-2 ring-amber-500/20 font-bold'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-700'
-                    }`}
-                  >
-                    <div>จองไว้ก่อน</div>
-                    <div className="text-[10px] text-slate-500">ชำระภายหลัง</div>
-                  </button>
-
+                  {/* Option 1: ซื้อเลย (ชำระเงินทันที) */}
                   <button
                     type="button"
                     onClick={() => setPaymentChoice('paid')}
-                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
                       paymentChoice === 'paid'
-                        ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 ring-2 ring-emerald-500/20 font-bold'
-                        : 'border-slate-200 hover:border-slate-300 text-slate-700'
+                        ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 ring-2 ring-emerald-500/20 font-bold shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
                     }`}
                   >
-                    <div>โอนชำระทันที</div>
-                    <div className="text-[10px] text-slate-500">ผ่าน PromptPay QR</div>
+                    <div className="flex items-center gap-1.5 text-xs text-emerald-900 font-extrabold">
+                      <span>💳 ซื้อเลย (ชำระทันที)</span>
+                    </div>
+                    <div className="text-[10px] text-emerald-700 mt-0.5 leading-tight">
+                      สแกนจ่ายผ่าน PromptPay QR ทันที
+                    </div>
+                  </button>
+
+                  {/* Option 2: จองไว้ก่อน (ชำระเงินภายหลัง) */}
+                  <button
+                    type="button"
+                    onClick={() => setPaymentChoice('unpaid')}
+                    className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                      paymentChoice === 'unpaid'
+                        ? 'border-amber-600 bg-amber-50/80 text-amber-950 ring-2 ring-amber-500/20 font-bold shadow-xs'
+                        : 'border-slate-200 hover:border-slate-300 text-slate-700 bg-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-xs text-amber-950 font-extrabold">
+                      <span>📝 จองไว้ก่อน</span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                      ระบุไซส์ไว้ก่อน ชำระเงินภายหลัง
+                    </div>
                   </button>
                 </div>
 
                 {paymentChoice === 'paid' && (
                   <div className="mt-2 p-3 bg-emerald-50/60 rounded-xl border border-emerald-200 space-y-2 animate-in fade-in">
                     <label className="block font-semibold text-emerald-900 text-[11px]">
-                      แนบสลิปโอนเงิน (ถ้ามี)
+                      แนบสลิปโอนเงิน (ถ้ามี หรือสแกน QR ในขั้นตอนถัดไป)
                     </label>
                     <label className="border border-dashed border-emerald-300 hover:border-emerald-500 rounded-lg p-2.5 flex items-center justify-center gap-2 cursor-pointer bg-white text-xs text-slate-600">
                       <Upload className="w-4 h-4 text-emerald-600" />
@@ -660,7 +670,11 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                 disabled={isSubmitting || totalShirtCount === 0}
                 className="w-full py-3.5 bg-gradient-to-r from-blue-700 to-indigo-600 hover:from-blue-800 hover:to-indigo-700 text-white font-extrabold rounded-2xl shadow-lg shadow-blue-500/25 transition-all text-sm disabled:opacity-50 cursor-pointer"
               >
-                {isSubmitting ? 'กำลังบันทึกการสั่งจอง...' : `ยืนยันการสั่งจองเสื้อรุ่น (${grandTotal.toLocaleString()} บาท)`}
+                {isSubmitting
+                  ? 'กำลังประมวลผลคำสั่งซื้อ...'
+                  : paymentChoice === 'paid'
+                  ? `💳 ยืนยันการสั่งซื้อและชำระเงิน (${grandTotal.toLocaleString()} บาท)`
+                  : `📝 ยืนยันการจองเสื้อรุ่น (ชำระภายหลัง ${grandTotal.toLocaleString()} บาท)`}
               </button>
             </div>
           </div>
@@ -735,7 +749,11 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
               <div className="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto shadow-inner">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-extrabold text-slate-900">สั่งจองเสื้อรุ่นสำเร็จเรียบร้อยแล้ว!</h3>
+              <h3 className="text-lg font-extrabold text-slate-900">
+                {successOrder.payment_status === 'paid' 
+                  ? '🎉 สั่งซื้อเสื้อรุ่นและบันทึกการชำระเงินสำเร็จ!' 
+                  : '📝 บันทึกการจองเสื้อรุ่นสำเร็จเรียบร้อยแล้ว!'}
+              </h3>
               <div className="inline-block px-3 py-1 bg-blue-50 text-blue-800 rounded-full font-mono text-xs font-bold border border-blue-200">
                 รหัสออเดอร์: {successOrder.order_code}
               </div>
