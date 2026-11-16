@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { TableItem } from '@/lib/db';
 import { APP_VERSION } from '@/config/version';
+import { formatThaiDateTime } from '@/lib/date';
 import ShirtModelsManager from '@/components/ShirtModelsManager';
 import { 
   X, 
@@ -340,7 +341,7 @@ export default function AdminModal({
         o.payment_status === 'paid' ? 'ชำระแล้ว' : 'รอชำระเงิน',
         o.order_status === 'delivered' ? 'ส่งมอบแล้ว' : o.order_status === 'shipped' ? 'จัดส่งแล้ว' : o.order_status === 'cancelled' ? 'ยกเลิกแล้ว' : 'รอดำเนินการ',
         `"${(o.note || '').replace(/"/g, '""')}"`,
-        o.created_at || ''
+        `"${o.created_at ? formatThaiDateTime(o.created_at) : '-'}"`
       ];
     });
 
@@ -581,7 +582,7 @@ export default function AdminModal({
       t.remaining_balance || 0,
       t.payment_status || 'unpaid',
       `"${(t.note || '').replace(/"/g, '""')}"`,
-      t.created_at || ''
+      `"${t.created_at ? formatThaiDateTime(t.created_at) : ''}"`
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -1066,6 +1067,7 @@ export default function AdminModal({
                             <th className="py-2.5 px-3">รุ่น/ห้อง</th>
                             <th className="py-2.5 px-3">ยอดชำระแล้ว</th>
                             <th className="py-2.5 px-3">คงเหลือ</th>
+                            <th className="py-2.5 px-3">วันที่/เวลาจอง</th>
                             <th className="py-2.5 px-3 text-right">จัดการ</th>
                           </tr>
                         </thead>
@@ -1113,6 +1115,9 @@ export default function AdminModal({
                               </td>
                               <td className="py-2.5 px-3 font-bold text-rose-600">
                                 {t.status !== 'AVAILABLE' ? `${(t.remaining_balance || 0).toLocaleString()} บ.` : '-'}
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap text-[11px]">
+                                {t.status !== 'AVAILABLE' ? formatThaiDateTime(t.created_at) : '-'}
                               </td>
                               <td className="py-2.5 px-3 text-right">
                                 <div className="inline-flex items-center gap-1.5 justify-end">
@@ -1328,6 +1333,7 @@ export default function AdminModal({
                             <th className="py-3 px-3 text-center">สลิป</th>
                             <th className="py-3 px-3 text-center">ชำระเงิน</th>
                             <th className="py-3 px-3 text-center">สถานะออเดอร์</th>
+                            <th className="py-3 px-3 text-center">วันที่/เวลาสั่ง</th>
                             <th className="py-3 px-3 text-center">จัดการ</th>
                           </tr>
                         </thead>
@@ -1440,6 +1446,9 @@ export default function AdminModal({
                                     <option value="cancelled">ยกเลิก</option>
                                   </select>
                                 </td>
+                                <td className="py-3 px-3 text-slate-500 text-center whitespace-nowrap text-[11px]">
+                                  {formatThaiDateTime(o.created_at)}
+                                </td>
                                 <td className="py-3 px-3 text-center">
                                   <button
                                     type="button"
@@ -1454,7 +1463,7 @@ export default function AdminModal({
                             ))}
                           {shirtOrders.length === 0 && (
                             <tr>
-                              <td colSpan={9} className="py-8 text-center text-slate-400 text-xs">
+                              <td colSpan={10} className="py-8 text-center text-slate-400 text-xs">
                                 ยังไม่มีรายการสั่งจองเสื้อรุ่น
                               </td>
                             </tr>

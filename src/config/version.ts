@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.3.4';
+export const APP_VERSION = 'v1.3.5';
 export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.5',
+    date: '2026-11-16',
+    changes: [
+      'แสดงผลวันที่และเวลาการจองโต๊ะและสั่งซื้อเสื้อรุ่นอย่างละเอียดในทุกหน้าจอ (Admin Table, Admin Shirts, Table View, Booking Modal, Shirt Shop, และ Export CSV)',
+      'ฟอร์แมตวันที่และเวลาแบบภาษาไทยอย่างเป็นทางการ (เช่น 16 พ.ย. 69 15:10 น.)',
+      'สำรองและซิงค์ข้อมูลออเดอร์เสื้อทั้ง 5 รายการล่าสุด และโต๊ะที่จองแล้ว 7 โต๊ะอย่างสมบูรณ์แบบ'
+    ]
+  },
   {
     version: 'v1.3.4',
     date: '2026-11-16',

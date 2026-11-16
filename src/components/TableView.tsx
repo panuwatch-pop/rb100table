@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { TableItem } from '@/lib/db';
+import { formatThaiDateTime } from '@/lib/date';
 import { 
   Search, 
   Filter, 
@@ -213,6 +214,14 @@ export default function TableView({
                         {(table.deposit_paid || 0).toLocaleString()} บ.
                       </span>
                     </div>
+                    {table.created_at && (
+                      <div className="flex items-center justify-between text-slate-500 text-[11px]">
+                        <span>วันที่จอง:</span>
+                        <span className="text-blue-900 font-medium">
+                          {formatThaiDateTime(table.created_at)}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

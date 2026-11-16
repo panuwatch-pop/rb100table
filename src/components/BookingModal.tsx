@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { TableItem } from '@/lib/db';
+import { formatThaiDateTime } from '@/lib/date';
 import { 
   X, 
   CheckCircle2, 
@@ -883,6 +884,15 @@ export default function BookingModal({
                     <span className="text-slate-500">หมายเหตุ:</span>
                     <span className="text-slate-700 text-right max-w-[240px]">
                       {table.note}
+                    </span>
+                  </div>
+                )}
+
+                {table.created_at && (
+                  <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-200/60">
+                    <span className="text-slate-500">วันที่และเวลาจอง:</span>
+                    <span className="font-semibold text-blue-900 text-xs">
+                      {formatThaiDateTime(table.created_at)}
                     </span>
                   </div>
                 )}

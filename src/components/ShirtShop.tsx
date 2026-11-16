@@ -21,6 +21,7 @@ import {
   X
 } from 'lucide-react';
 import { ShirtType, ShirtOrderItem } from '@/lib/db';
+import { formatThaiDateTime } from '@/lib/date';
 
 interface ShirtShopProps {
   onBackToMap: () => void;
@@ -807,6 +808,12 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
               <div className="flex justify-between">
                 <span className="text-slate-500">จำนวนเสื้อรวม:</span>
                 <span className="font-bold text-slate-800">{successOrder.total_quantity} ตัว</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">วันที่และเวลาสั่งซื้อ:</span>
+                <span className="font-semibold text-blue-900">
+                  {formatThaiDateTime(successOrder.created_at)}
+                </span>
               </div>
               <div className="flex justify-between pt-1 border-t border-slate-200 text-sm">
                 <span className="font-bold text-slate-700">ยอดเงินรวม:</span>
