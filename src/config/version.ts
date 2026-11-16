@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.3.1';
+export const APP_VERSION = 'v1.3.2';
 export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.2',
+    date: '2026-11-16',
+    changes: [
+      'เพิ่มไฟล์รูปภาพถ่ายจริงของเสื้อรุ่นทั้ง 2 แบบ (เสื้อโปโล และ เสื้อยืด) ทั้งภาพด้านหน้าและด้านหลังเข้าสู่ระบบถาวร',
+      'ปรับปรุงการแสดงผลหน้าร้านสั่งซื้อเสื้อรุ่นให้แสดงภาพถ่ายเสื้อจริงบนหุ่นโชว์ คมชัดทั้งสองด้าน',
+      'เชื่อมโยงฐานข้อมูลแบบเสื้อรุ่นกับรูปภาพจริงทั้ง 4 รูปเรียบร้อยสมบูรณ์'
+    ]
+  },
   {
     version: 'v1.3.1',
     date: '2026-11-16',
