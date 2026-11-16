@@ -30,7 +30,9 @@ import {
   Package,
   Camera,
   PlusCircle,
-  Save
+  Save,
+  Database,
+  UploadCloud
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -111,6 +113,8 @@ export default function AdminModal({
   const [settingsMsg, setSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [lineTestLoading, setLineTestLoading] = useState(false);
   const [bulkPriceLoading, setBulkPriceLoading] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
 
   // Filter reservations & tables
   const [searchTableQuery, setSearchTableQuery] = useState('');
@@ -472,6 +476,60 @@ export default function AdminModal({
     document.body.removeChild(link);
   };
 
+  // Download complete SQLite DB backup
+  const handleDownloadDbBackup = async () => {
+    try {
+      setBackupLoading(true);
+      const res = await fetch('/api/admin/backup/db');
+      if (!res.ok) throw new Error('ดาวน์โหลดไฟล์ฐานข้อมูลไม่สำเร็จ');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `reunion-backup-${new Date().toISOString().split('T')[0]}.db`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการดาวน์โหลดฐานข้อมูล');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  // Import and restore reservations from CSV
+  const handleImportCsvFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm(`คุณต้องการนำเข้าและกู้คืนข้อมูลการจองโต๊ะจากไฟล์ "${file.name}" ใช่หรือไม่?\n(โต๊ะที่ระบุในไฟล์จะถูกอัปเดตสถานะและข้อมูลผู้จองตามไฟล์ CSV ทันที)`)) {
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setImportLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/backup/import-csv', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'นำเข้าข้อมูลไม่สำเร็จ');
+
+      alert(`✅ ${data.message}`);
+      onRefreshData();
+    } catch (err: any) {
+      alert(`❌ เกิดข้อผิดพลาด: ${err.message}`);
+    } finally {
+      setImportLoading(false);
+      e.target.value = '';
+    }
+  };
+
   // Bulk update table prices
   const handleBulkUpdatePrice = async () => {
     const price = Number(settings.table_default_price);
@@ -726,15 +784,28 @@ export default function AdminModal({
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between">
-                <span className="text-slate-500 text-[11px]">ดาวน์โหลดรายงาน</span>
-                <button
-                  type="button"
-                  onClick={handleExportCSV}
-                  className="mt-1 flex items-center justify-center gap-1.5 py-1.5 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all shadow-xs"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export Excel (CSV)</span>
-                </button>
+                <span className="text-slate-500 text-[11px]">ดาวน์โหลดรายงาน / สำรอง</span>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all shadow-xs"
+                    title="ดาวน์โหลดรายงานโต๊ะในรูปแบบ Excel CSV"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>CSV</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadDbBackup}
+                    disabled={backupLoading}
+                    className="flex items-center justify-center gap-1 py-1.5 px-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg font-bold text-xs transition-all shadow-xs cursor-pointer"
+                    title="ดาวน์โหลดไฟล์ฐานข้อมูลจริง (.db) สำรองเก็บไว้"
+                  >
+                    <Database className="w-3.5 h-3.5" />
+                    <span>{backupLoading ? '...' : '.DB'}</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1453,6 +1524,41 @@ export default function AdminModal({
                         <Send className="w-3.5 h-3.5" />
                         <span>{lineTestLoading ? 'กำลังส่ง...' : 'ทดสอบส่งการ์ดเข้ากลุ่ม LINE'}</span>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Section 5: Database Backup & Emergency Recovery */}
+                  <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-200 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-indigo-600" />
+                      <h4 className="font-bold text-slate-900 text-sm">การสำรองฐานข้อมูลและการกู้คืนข้อมูล (Backup & Disaster Recovery)</h4>
+                    </div>
+                    <p className="text-[11px] text-slate-600 leading-relaxed">
+                      แอดมินสามารถดาวน์โหลดไฟล์ฐานข้อมูลจริง (.db) สำรองเก็บไว้ในคอมพิวเตอร์ของคุณได้ตลอดเวลา และสามารถนำเข้าไฟล์ CSV รายงานการจองโต๊ะเพื่อกู้คืนสถานะโต๊ะทั้งหมดได้ทันที
+                    </p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleDownloadDbBackup}
+                        disabled={backupLoading}
+                        className="py-2.5 px-3 bg-white hover:bg-slate-100 border border-indigo-300 text-indigo-800 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+                      >
+                        <Database className="w-4 h-4 text-indigo-600" />
+                        <span>{backupLoading ? 'กำลังดาวน์โหลด...' : '📥 ดาวน์โหลดสำรองฐานข้อมูล (.db)'}</span>
+                      </button>
+
+                      <label className="py-2.5 px-3 bg-white hover:bg-slate-100 border border-emerald-300 text-emerald-800 font-bold rounded-xl text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer text-center">
+                        <UploadCloud className="w-4 h-4 text-emerald-600" />
+                        <span>{importLoading ? 'กำลังกู้คืน...' : '📤 นำเข้าและกู้คืนข้อมูลโต๊ะจาก CSV'}</span>
+                        <input
+                          type="file"
+                          accept=".csv"
+                          disabled={importLoading}
+                          onChange={handleImportCsvFile}
+                          className="hidden"
+                        />
+                      </label>
                     </div>
                   </div>
 

@@ -1,5 +1,5 @@
-export const APP_VERSION = 'v1.3.0';
-export const APP_RELEASE_DATE = '2026-11-15';
+export const APP_VERSION = 'v1.3.1';
+export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
   version: string;
@@ -8,6 +8,16 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.1',
+    date: '2026-11-16',
+    changes: [
+      'ปรับปรุงความปลอดภัยไฟล์ Deploy ZIP โดยตัดโฟลเดอร์ data/ ออกถาวร ป้องกันการเขียนทับฐานข้อมูลจริงบนเซิร์ฟเวอร์ 100%',
+      'เพิ่มระบบดาวน์โหลดสำรองไฟล์ฐานข้อมูลจริง (.db) ในหน้า Admin Dashboard สำหรับแอดมิน',
+      'เพิ่มระบบนำเข้าและกู้คืนข้อมูลการจองโต๊ะฉุกเฉินจากไฟล์ CSV (Disaster Recovery)',
+      'กู้คืนและตรวจสอบความถูกต้องของข้อมูลโต๊ะทั้ง 7 โต๊ะในระบบออนไลน์เรียบร้อยสมบูรณ์'
+    ]
+  },
   {
     version: 'v1.3.0',
     date: '2026-11-15',
