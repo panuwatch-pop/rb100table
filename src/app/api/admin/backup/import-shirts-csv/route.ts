@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         // Could be "รายการเสื้อ": "เสื้อโปโล (L) x2, เสื้อยืด (XL) x1"
         // Or individual columns "แบบเสื้อ", "ไซส์", "จำนวน"
         const itemsStr = r['รายการเสื้อ'] || r['รายการ'] || r['items'] || '';
-        const shirtModel = r['แบบเสื้อ'] || r['ชนิดเสื้อ'] || 'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)';
+        const shirtModel = r['แบบเสื้อ'] || r['ชนิดเสื้อ'] || 'เสื้อโปโล สำหรับงาน 2 มีนาคม 2570 (Polo Premium)';
         const size = r['ไซส์'] || r['ขนาด'] || 'L';
         const qty = parseInt(r['จำนวน'] || '1', 10) || 1;
         const price = parseInt(r['ราคา'] || r['ยอดรวม(บาท)'] || r['ยอดรวม'] || '300', 10) || (qty * 300);

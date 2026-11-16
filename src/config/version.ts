@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.3.5';
+export const APP_VERSION = 'v1.3.6';
 export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.6',
+    date: '2026-11-16',
+    changes: [
+      'แก้ไขข้อความและหัวข้อเกี่ยวกับเสื้อเป็น "เสื้อสำหรับงาน 2 มีนาคม 2570" ในแท็บเมนู Navbar, แบนเนอร์หน้าร้านสั่งเสื้อ, สรุปรายการคำสั่งซื้อ และข้อความยืนยัน',
+      'เพิ่มระบบ Seamless Migration ปรับปรุงชื่อแบบเสื้อมาตรฐานและคำอธิบายในฐานข้อมูลเป็นเสื้อสำหรับงาน 2 มีนาคม 2570 อัตโนมัติเมื่อเปิดใช้งาน',
+      'อัปเดตข้อความแจ้งเตือนคำสั่งซื้อเสื้อผ่าน LINE Notification ระบุชื่องาน 2 มีนาคม 2570 ชัดเจน'
+    ]
+  },
   {
     version: 'v1.3.5',
     date: '2026-11-16',

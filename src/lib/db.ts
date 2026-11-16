@@ -224,8 +224,8 @@ function initSchema(db: DatabaseSync) {
     `);
     const now = new Date().toISOString();
     insertShirt.run(
-      'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)',
-      'ผ้า Dry-Tech เนื้อนุ่ม ทรงสวย ปักตราโรงเรียนด้านหน้า สกรีนลาย 100 ปี ด้านหลัง ใส่สบาย ไม่ร้อน',
+      'เสื้อโปโล สำหรับงาน 2 มีนาคม 2570 (Polo Premium)',
+      'ผ้า Dry-Tech เนื้อนุ่ม ทรงสวย ปักตราโรงเรียนด้านหน้า สกรีนลายเสื้อสำหรับงาน 2 มีนาคม 2570 ใส่สบาย ไม่ร้อน',
       300,
       '/shirts/polo_front.jpg',
       '/shirts/polo_back.jpg',
@@ -235,8 +235,8 @@ function initSchema(db: DatabaseSync) {
       now
     );
     insertShirt.run(
-      'เสื้อยืดคอกลม คืนสู่เหย้า 100 ปี (T-Shirt Classic)',
-      'ผ้า Cotton 100% Comb 32 สกรีนลายกราฟิกรุ่น 100 ปี ผ้านุ่มใส่สบาย ระบายเหงื่อได้ดีเยี่ยม',
+      'เสื้อยืดคอกลม สำหรับงาน 2 มีนาคม 2570 (T-Shirt Classic)',
+      'ผ้า Cotton 100% Comb 32 สกรีนลายเสื้อสำหรับงาน 2 มีนาคม 2570 ผ้านุ่มใส่สบาย ระบายเหงื่อได้ดีเยี่ยม',
       300,
       '/shirts/tshirt_front.jpg',
       '/shirts/tshirt_back.jpg',
@@ -245,6 +245,24 @@ function initSchema(db: DatabaseSync) {
       2,
       now
     );
+  } else {
+    // Seamless migration: update default 100 ปี names to 2 มีนาคม 2570 if still using old default names
+    try {
+      db.prepare(`
+        UPDATE shirt_types 
+        SET name = 'เสื้อโปโล สำหรับงาน 2 มีนาคม 2570 (Polo Premium)',
+            description = 'ผ้า Dry-Tech เนื้อนุ่ม ทรงสวย ปักตราโรงเรียนด้านหน้า สกรีนลายเสื้อสำหรับงาน 2 มีนาคม 2570 ใส่สบาย ไม่ร้อน'
+        WHERE id = 1 AND name LIKE '%100 ปี%'
+      `).run();
+      db.prepare(`
+        UPDATE shirt_types 
+        SET name = 'เสื้อยืดคอกลม สำหรับงาน 2 มีนาคม 2570 (T-Shirt Classic)',
+            description = 'ผ้า Cotton 100% Comb 32 สกรีนลายเสื้อสำหรับงาน 2 มีนาคม 2570 ผ้านุ่มใส่สบาย ระบายเหงื่อได้ดีเยี่ยม'
+        WHERE id = 2 AND name LIKE '%100 ปี%'
+      `).run();
+    } catch (migErr) {
+      console.warn('Migration shirt_types warning:', migErr);
+    }
   }
 }
 

@@ -232,13 +232,13 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-bold border border-blue-400/20">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>สั่งจองเสื้อรุ่นที่ระลึก 100 ปี</span>
+              <span>เสื้อสำหรับงาน 2 มีนาคม 2570</span>
             </div>
             <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight">
-              สั่งจองเสื้อรุ่น คืนสู่เหย้า 100 ปี
+              เสื้อสำหรับงาน 2 มีนาคม 2570
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl">
-              มีให้เลือกทั้งแบบเสื้อโปโลพรีเมียม และเสื้อยืดคอกลมคลาสสิก • ไซส์ M, L, XL, 2XL, 3XL, 4XL, 5XL ราคาเดียวทุกไซส์
+              มีให้เลือกทั้งแบบเสื้อโปโลพรีเมียม และเสื้อยืดคอกลมคลาสสิก • เสื้อสำหรับงาน 2 มีนาคม 2570 • ไซส์ M, L, XL, 2XL, 3XL, 4XL, 5XL ราคาเดียวทุกไซส์
             </p>
           </div>
 
@@ -418,7 +418,7 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                     <ShoppingBag className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold text-slate-900">สรุปคำสั่งจองเสื้อ</h2>
+                    <h2 className="text-base font-bold text-slate-900">สรุปคำสั่งจองเสื้อ (งาน 2 มีนาคม 2570)</h2>
                     <p className="text-[11px] text-slate-500">เลือกเสื้อแล้ว {totalShirtCount} ตัว</p>
                   </div>
                 </div>
@@ -709,7 +709,7 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                   ? 'กำลังประมวลผลคำสั่งซื้อ...'
                   : paymentChoice === 'paid'
                   ? `💳 ยืนยันการสั่งซื้อและชำระเงิน (${grandTotal.toLocaleString()} บาท)`
-                  : `📝 ยืนยันการจองเสื้อรุ่น (ชำระภายหลัง ${grandTotal.toLocaleString()} บาท)`}
+                  : `📝 ยืนยันการสั่งจองเสื้อสำหรับงาน 2 มีนาคม 2570 (ชำระภายหลัง ${grandTotal.toLocaleString()} บาท)`}
               </button>
             </div>
           </div>
@@ -786,8 +786,8 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
               </div>
               <h3 className="text-lg font-extrabold text-slate-900">
                 {successOrder.payment_status === 'paid' 
-                  ? '🎉 สั่งซื้อเสื้อรุ่นและบันทึกการชำระเงินสำเร็จ!' 
-                  : '📝 บันทึกการจองเสื้อรุ่นสำเร็จเรียบร้อยแล้ว!'}
+                  ? '🎉 สั่งซื้อเสื้อสำหรับงาน 2 มีนาคม 2570 และบันทึกการชำระเงินสำเร็จ!' 
+                  : '📝 บันทึกการจองเสื้อสำหรับงาน 2 มีนาคม 2570 สำเร็จเรียบร้อยแล้ว!'}
               </h3>
               <div className="inline-block px-3 py-1 bg-blue-50 text-blue-800 rounded-full font-mono text-xs font-bold border border-blue-200">
                 รหัสออเดอร์: {successOrder.order_code}

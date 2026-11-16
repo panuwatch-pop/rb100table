@@ -309,7 +309,7 @@ export async function notifyNewShirtOrder(data: {
   const isPaid = data.paymentStatus === 'paid';
   const flexMessage = {
     type: 'flex',
-    altText: `👕 มีการสั่งจองเสื้อรุ่นใหม่: ${data.orderCode} (${data.customerName})`,
+    altText: `👕 มีการสั่งจองเสื้อสำหรับงาน 2 มีนาคม 2570: ${data.orderCode} (${data.customerName})`,
     contents: {
       type: 'bubble',
       size: 'mega',
@@ -321,7 +321,7 @@ export async function notifyNewShirtOrder(data: {
         contents: [
           {
             type: 'text',
-            text: '👕 มีการสั่งจองเสื้อรุ่นใหม่!',
+            text: '👕 มีการสั่งจองเสื้อ (งาน 2 มีนาคม 2570)!',
             weight: 'bold',
             color: '#fbbf24',
             size: 'md'

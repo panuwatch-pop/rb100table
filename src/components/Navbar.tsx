@@ -109,7 +109,8 @@ export default function Navbar({
                 }`}
               >
                 <Shirt className="w-3.5 h-3.5" />
-                <span>สั่งซื้อ / จองเสื้อ</span>
+                <span className="hidden sm:inline">เสื้อสำหรับงาน 2 มีนาคม 2570</span>
+                <span className="sm:hidden">เสื้อ 2 มี.ค. 70</span>
               </button>
             </div>
 

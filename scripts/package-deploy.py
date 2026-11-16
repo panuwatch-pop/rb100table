@@ -1,68 +1,57 @@
 import os
 import zipfile
-import shutil
+import pathlib
+import sys
 
-source_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-desktop_zip = os.path.join(os.path.expanduser('~'), 'Desktop', 'reunion-table-rb100-deploy.zip')
-local_zip = os.path.join(source_dir, 'reunion-table-rb100-deploy.zip')
+dest_zip = r"C:\Users\kornsiri\Desktop\reunion-table-rb100-deploy.zip"
+root_dir = r"F:\reunion-table-reservation"
 
-print("Packaging deployment ZIP for Plesk...")
+include_dirs = [".next", "public", "_next", "scripts"]
+include_files = ["app.js", "package.json"]
 
-# Verify postbuild results
-standalone_server = os.path.join(source_dir, '.next', 'standalone', 'server.js')
-if not os.path.exists(standalone_server):
-    print("Warning: Standalone server.js not found yet!")
+exclude_extensions = {".db", ".db-journal", ".db-wal", ".db-shm", ".log"}
+exclude_top_dirs = {"node_modules", ".git", "data", "scratch", "rb100table"}
+exclude_next_subdirs = {"cache", "dev", "diagnostics"}
 
-# Files and folders to include
-# NOTE: EXCLUDING 'data' and ALL .db files so deploy ZIP NEVER overwrites live database on the server!
-includes = [
-    ('.next', '.next'),
-    ('_next', '_next'),
-    ('public', 'public'),
-    ('scripts', 'scripts'),
-    ('app.js', 'app.js'),
-    ('package.json', 'package.json')
-]
+print("Packaging deployment zip...")
+with zipfile.ZipFile(dest_zip, "w", zipfile.ZIP_DEFLATED) as zf:
+    for f in include_files:
+        fp = os.path.join(root_dir, f)
+        if os.path.exists(fp):
+            zf.write(fp, f)
+            print(f"Added file: {f}")
 
-temp_zip = desktop_zip + '.tmp'
-if os.path.exists(temp_zip):
-    os.remove(temp_zip)
+    for d in include_dirs:
+        dp = os.path.join(root_dir, d)
+        if not os.path.exists(dp):
+            continue
+        for root, dirs, files in os.walk(dp):
+            # Prune excluded dirs
+            dirs[:] = [sub for sub in dirs if sub not in exclude_top_dirs]
+            rel_dir = os.path.relpath(root, root_dir)
+            parts = pathlib.Path(rel_dir).parts
+            if len(parts) >= 2 and parts[0] == ".next" and parts[1] in exclude_next_subdirs:
+                continue
 
-with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zf:
-    for item, arc_prefix in includes:
-        full_path = os.path.join(source_dir, item)
-        if os.path.isfile(full_path):
-            zf.write(full_path, arc_prefix)
-            print(f"Added file: {arc_prefix}")
-        elif os.path.isdir(full_path):
-            for root, dirs, files in os.walk(full_path):
-                # Skip heavy unneeded subfolders and git
-                dirs[:] = [d for d in dirs if d not in ['cache', '.git']]
-                
-                # Exclude ALL database files anywhere (.db, .db-wal, .db-shm, .sqlite)
-                files = [f for f in files if not (f.endswith('.db') or f.endswith('.db-wal') or f.endswith('.db-shm') or f.endswith('.sqlite'))]
-                
-                # If we are in public/uploads, skip any uploaded user files (slips, shirts)
-                rel_root = os.path.relpath(root, source_dir)
-                if 'uploads' in rel_root.replace('\\', '/').split('/'):
-                    # Only include .gitkeep or skip uploaded images to prevent overwriting server uploads
-                    files = [f for f in files if f == '.gitkeep']
-                
-                for file in files:
-                    file_full = os.path.join(root, file)
-                    rel_path = os.path.relpath(file_full, source_dir)
-                    zf.write(file_full, rel_path)
-            print(f"Added directory: {arc_prefix}")
+            for file in files:
+                ext = os.path.splitext(file)[1].lower()
+                if ext in exclude_extensions:
+                    print(f"Skipping excluded file: {file}")
+                    continue
+                full_p = os.path.join(root, file)
+                rel_p = os.path.relpath(full_p, root_dir)
+                zf.write(full_p, rel_p)
 
-# Move temp zip to destination
-if os.path.exists(desktop_zip):
-    try:
-        os.remove(desktop_zip)
-    except Exception as e:
-        print(f"Could not remove old desktop zip: {e}")
+with zipfile.ZipFile(dest_zip, "r") as zf:
+    names = zf.namelist()
+    db_files = [n for n in names if n.endswith((".db", ".db-wal", ".db-shm"))]
+    print(f"Total files in zip: {len(names)}")
+    print(f"Database files in zip: {len(db_files)}")
+    if db_files:
+        print("CRITICAL WARNING: Database files found in zip:", db_files)
+        sys.exit(1)
+    else:
+        print("SUCCESS: Zero database files in zip!")
 
-shutil.move(temp_zip, desktop_zip)
-shutil.copy2(desktop_zip, local_zip)
-
-file_size_mb = os.path.getsize(desktop_zip) / (1024 * 1024)
-print(f"SUCCESS: Created deployment ZIP at {desktop_zip} ({file_size_mb:.2f} MB)")
+zip_size_mb = os.path.getsize(dest_zip) / (1024 * 1024)
+print(f"Zip size: {zip_size_mb:.2f} MB")
