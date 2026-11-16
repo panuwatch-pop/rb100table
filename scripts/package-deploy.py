@@ -14,7 +14,7 @@ if not os.path.exists(standalone_server):
     print("Warning: Standalone server.js not found yet!")
 
 # Files and folders to include
-# NOTE: EXCLUDING 'data' so deploy ZIP NEVER overwrites live database on the server!
+# NOTE: EXCLUDING 'data' and ALL .db files so deploy ZIP NEVER overwrites live database on the server!
 includes = [
     ('.next', '.next'),
     ('_next', '_next'),
@@ -36,8 +36,11 @@ with zipfile.ZipFile(temp_zip, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as zf
             print(f"Added file: {arc_prefix}")
         elif os.path.isdir(full_path):
             for root, dirs, files in os.walk(full_path):
-                # Skip heavy unneeded subfolders and skip uploaded files
+                # Skip heavy unneeded subfolders and git
                 dirs[:] = [d for d in dirs if d not in ['cache', '.git']]
+                
+                # Exclude ALL database files anywhere (.db, .db-wal, .db-shm, .sqlite)
+                files = [f for f in files if not (f.endswith('.db') or f.endswith('.db-wal') or f.endswith('.db-shm') or f.endswith('.sqlite'))]
                 
                 # If we are in public/uploads, skip any uploaded user files (slips, shirts)
                 rel_root = os.path.relpath(root, source_dir)
