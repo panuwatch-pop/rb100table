@@ -108,6 +108,25 @@ export default function AdminModal({
   const [shirtTypesLoading, setShirtTypesLoading] = useState(false);
   const [uploadingImageKey, setUploadingImageKey] = useState<string | null>(null);
 
+  // Manual Shirt Order Modal State & CSV Import
+  const [showManualShirtModal, setShowManualShirtModal] = useState(false);
+  const [manualShirtForm, setManualShirtForm] = useState({
+    customer_name: '',
+    customer_phone: '',
+    customer_batch: '',
+    delivery_type: 'pickup' as 'pickup' | 'delivery',
+    delivery_address: '',
+    shirt_type_id: 1,
+    shirt_name: 'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)',
+    size: 'L',
+    quantity: 1,
+    unit_price: 300,
+    payment_status: 'paid' as 'unpaid' | 'paid',
+    note: ''
+  });
+  const [manualShirtSubmitting, setManualShirtSubmitting] = useState(false);
+  const [shirtImportLoading, setShirtImportLoading] = useState(false);
+
   // Settings Form State
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -336,9 +355,107 @@ export default function AdminModal({
     document.body.removeChild(link);
   };
 
-  // Fetch settings when logged in and tab is active
+  const handleCreateManualOrder = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualShirtForm.customer_name.trim() || !manualShirtForm.customer_phone.trim()) {
+      alert('กรุณากรอกชื่อและเบอร์โทรศัพท์');
+      return;
+    }
+    setManualShirtSubmitting(true);
+    try {
+      const selectedType = adminShirtTypes.find(t => t.id === Number(manualShirtForm.shirt_type_id)) || adminShirtTypes[0];
+      const shirtName = selectedType ? selectedType.name : manualShirtForm.shirt_name;
+      const unitPrice = selectedType ? selectedType.price : 300;
+      const qty = Number(manualShirtForm.quantity) || 1;
+
+      const payload = {
+        customer_name: manualShirtForm.customer_name.trim(),
+        customer_phone: manualShirtForm.customer_phone.trim(),
+        customer_batch: manualShirtForm.customer_batch.trim(),
+        delivery_type: manualShirtForm.delivery_type,
+        delivery_address: manualShirtForm.delivery_address.trim(),
+        payment_status: manualShirtForm.payment_status,
+        note: manualShirtForm.note.trim() ? `[แอดมินบันทึก] ${manualShirtForm.note.trim()}` : '[แอดมินบันทึก]',
+        items: [
+          {
+            shirt_type_id: Number(manualShirtForm.shirt_type_id),
+            shirt_name: shirtName,
+            size: manualShirtForm.size,
+            quantity: qty,
+            unit_price: unitPrice,
+            subtotal: qty * unitPrice
+          }
+        ]
+      };
+
+      const res = await fetch('/api/shirts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'บันทึกออเดอร์ไม่สำเร็จ');
+
+      alert('บันทึกออเดอร์เสื้อรุ่นสำเร็จ!');
+      setShowManualShirtModal(false);
+      setManualShirtForm({
+        customer_name: '',
+        customer_phone: '',
+        customer_batch: '',
+        delivery_type: 'pickup',
+        delivery_address: '',
+        shirt_type_id: 1,
+        shirt_name: 'เสื้อโปโล คืนสู่เหย้า 100 ปี (Polo Premium)',
+        size: 'L',
+        quantity: 1,
+        unit_price: 300,
+        payment_status: 'paid',
+        note: ''
+      });
+      fetchShirtOrders();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการบันทึกออเดอร์');
+    } finally {
+      setManualShirtSubmitting(false);
+    }
+  };
+
+  const handleImportShirtCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!confirm(`คุณต้องการนำเข้าออเดอร์เสื้อจากไฟล์ "${file.name}" ใช่หรือไม่?`)) {
+      e.target.value = '';
+      return;
+    }
+
+    setShirtImportLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/admin/backup/import-shirts-csv', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'นำเข้าข้อมูลไม่สำเร็จ');
+
+      alert(data.message || 'นำเข้าออเดอร์เสื้อเรียบร้อยแล้ว!');
+      fetchShirtOrders();
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการนำเข้าไฟล์ CSV');
+    } finally {
+      setShirtImportLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Fetch settings, shirt types, and shirt orders when logged in
   useEffect(() => {
     if (isAdmin && isOpen) {
+      fetchShirtTypesAdmin();
+      fetchShirtOrders();
       fetch('/api/admin/settings')
         .then(res => res.json())
         .then(data => {
@@ -1075,6 +1192,31 @@ export default function AdminModal({
                       </button>
                     </div>
 
+                    {shirtSubTab === 'orders' && (
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setShowManualShirtModal(true)}
+                          className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                        >
+                          <PlusCircle className="w-3.5 h-3.5" />
+                          <span>เพิ่มออเดอร์เสื้อ</span>
+                        </button>
+
+                        <label className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer">
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>{shirtImportLoading ? 'กำลังนำเข้า...' : 'Import CSV เสื้อ'}</span>
+                          <input
+                            type="file"
+                            accept=".csv"
+                            onChange={handleImportShirtCsv}
+                            disabled={shirtImportLoading}
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    )}
+
                     {shirtSubTab === 'models' && (
                       <button
                         type="button"
@@ -1653,6 +1795,185 @@ export default function AdminModal({
                   </button>
                 </form>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Manual Add Shirt Order Modal */}
+        {showManualShirtModal && (
+          <div className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <Shirt className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-sm">เพิ่มรายการออเดอร์เสื้อด้วยตนเอง</h3>
+                    <p className="text-[11px] text-slate-500">สำหรับแอดมินบันทึกยอดสั่งจองจาก LINE / โทรสั่ง หรือกู้คืนข้อมูล</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowManualShirtModal(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateManualOrder} className="space-y-3 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">ชื่อผู้สั่งจอง *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="เช่น สมชาย ใจดี"
+                      value={manualShirtForm.customer_name}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, customer_name: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ *</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="เช่น 0812345678"
+                      value={manualShirtForm.customer_phone}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, customer_phone: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">รุ่น / ห้อง</label>
+                    <input
+                      type="text"
+                      placeholder="เช่น 100, 107 ห้อง 5"
+                      value={manualShirtForm.customer_batch}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, customer_batch: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">แบบเสื้อ</label>
+                    <select
+                      value={manualShirtForm.shirt_type_id}
+                      onChange={e => {
+                        const id = Number(e.target.value);
+                        const sel = adminShirtTypes.find(t => t.id === id);
+                        setManualShirtForm({
+                          ...manualShirtForm,
+                          shirt_type_id: id,
+                          shirt_name: sel ? sel.name : manualShirtForm.shirt_name
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    >
+                      {adminShirtTypes.map(t => (
+                        <option key={t.id} value={t.id}>{t.name} (300 บาท)</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">ไซส์</label>
+                    <select
+                      value={manualShirtForm.size}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, size: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    >
+                      {['M', 'L', 'XL', '2XL', '3XL', '4XL', '5XL'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">จำนวน (ตัว)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={manualShirtForm.quantity}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, quantity: Math.max(1, parseInt(e.target.value, 10) || 1) })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">วิธีรับสินค้า</label>
+                    <select
+                      value={manualShirtForm.delivery_type}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, delivery_type: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    >
+                      <option value="pickup">รับเองหน้างาน (ฟรี)</option>
+                      <option value="delivery">จัดส่งพัสดุ (+50 บาท)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">สถานะชำระเงิน</label>
+                    <select
+                      value={manualShirtForm.payment_status}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, payment_status: e.target.value as any })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white"
+                    >
+                      <option value="paid">ชำระแล้ว (Paid)</option>
+                      <option value="unpaid">รอชำระเงิน (Unpaid)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {manualShirtForm.delivery_type === 'delivery' && (
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">ที่อยู่จัดส่งพัสดุ</label>
+                    <textarea
+                      rows={2}
+                      placeholder="บ้านเลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์"
+                      value={manualShirtForm.delivery_address}
+                      onChange={e => setManualShirtForm({ ...manualShirtForm, delivery_address: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">หมายเหตุเพิ่มเติม</label>
+                  <input
+                    type="text"
+                    placeholder="เช่น โอนเข้าบัญชีกรุงไทย, สั่งทางไลน์"
+                    value={manualShirtForm.note}
+                    onChange={e => setManualShirtForm({ ...manualShirtForm, note: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualShirtModal(false)}
+                    className="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-semibold hover:bg-slate-50 transition-all cursor-pointer"
+                  >
+                    ยกเลิก
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={manualShirtSubmitting}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{manualShirtSubmitting ? 'กำลังบันทึก...' : 'บันทึกออเดอร์'}</span>
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

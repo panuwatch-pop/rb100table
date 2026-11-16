@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isAuthenticated } from '@/lib/auth';
+import { getDbPath } from '@/lib/db';
 import path from 'path';
 import fs from 'fs';
 
@@ -12,7 +13,7 @@ export async function GET() {
       return NextResponse.json({ success: false, error: 'ไม่มีสิทธิ์เข้าถึง' }, { status: 401 });
     }
 
-    const dbPath = path.join(process.cwd(), 'data', 'reunion.db');
+    const dbPath = getDbPath();
     if (!fs.existsSync(dbPath)) {
       return NextResponse.json({ success: false, error: 'ไม่พบไฟล์ฐานข้อมูล' }, { status: 404 });
     }

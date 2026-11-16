@@ -282,7 +282,14 @@ export default function ShirtModelsManager({
         })}
       </div>
 
-      {shirtTypes.length === 0 && (
+      {loading && shirtTypes.length === 0 && (
+        <div className="py-12 text-center text-indigo-600 text-xs bg-indigo-50/50 rounded-2xl border border-dashed border-indigo-200 flex flex-col items-center justify-center gap-2">
+          <RefreshCw className="w-5 h-5 animate-spin" />
+          <span>กำลังโหลดข้อมูลแบบเสื้อและรูปภาพ...</span>
+        </div>
+      )}
+
+      {!loading && shirtTypes.length === 0 && (
         <div className="py-12 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl border border-dashed border-slate-200">
           ยังไม่มีแบบเสื้อรุ่นในระบบ กรุณากดปุ่ม &quot;เพิ่มแบบเสื้อใหม่&quot; ด้านบน
         </div>

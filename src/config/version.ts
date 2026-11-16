@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.3.3';
+export const APP_VERSION = 'v1.3.4';
 export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,16 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.4',
+    date: '2026-11-16',
+    changes: [
+      'กำหนดตำแหน่งที่เก็บไฟล์ฐานข้อมูล SQLite ถาวรที่ Root data/reunion.db อยู่นอกโฟลเดอร์ .next ป้องกันผลกระทบจากการ Deploy 100%',
+      'เพิ่มระบบ "➕ เพิ่มออเดอร์เสื้อด้วยตนเอง" (Manual Order Entry) ในหน้าแอดมิน เพื่อบันทึกยอดสั่งเสื้อย้อนหลังหรือรับออเดอร์ผ่าน LINE ได้ทันที',
+      'เพิ่มระบบ "📥 นำเข้า CSV ออเดอร์เสื้อ" (Disaster Recovery Import CSV) รองรับการกู้คืนและนำเข้าข้อมูลการสั่งเสื้อจากไฟล์ Excel/CSV',
+      'ปรับปรุงสถานะการโหลดแบบเสื้อและออเดอร์ในหน้าแอดมิน โหลดล่วงหน้าทันทีที่ล็อกอิน พร้อมแสดง Spinner ป้องกันการสับสน'
+    ]
+  },
   {
     version: 'v1.3.3',
     date: '2026-11-16',

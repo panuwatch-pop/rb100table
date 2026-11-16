@@ -4,6 +4,19 @@ const path = require('path');
 
 process.env.NODE_ENV = process.env.NODE_ENV || 'production';
 
+// CRITICAL: Ensure SQLite database is ALWAYS located in the application root directory
+// and NEVER inside the ephemeral .next directory!
+const rootDataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(rootDataDir)) {
+  try {
+    fs.mkdirSync(rootDataDir, { recursive: true });
+  } catch (e) {
+    console.warn('Could not create root data dir:', e.message);
+  }
+}
+process.env.DATA_DIR = process.env.DATA_DIR || rootDataDir;
+process.env.DATABASE_PATH = process.env.DATABASE_PATH || path.join(rootDataDir, 'reunion.db');
+
 function copyFolderSync(from, to) {
   if (!fs.existsSync(from)) return;
   fs.mkdirSync(to, { recursive: true });

@@ -4,12 +4,29 @@ import fs from 'fs';
 import crypto from 'crypto';
 import seedData from '@/data/tables_seed.json';
 
-const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
+function resolveDataDir(): string {
+  if (process.env.DATA_DIR) {
+    return process.env.DATA_DIR;
+  }
+  const cwd = process.cwd();
+  // If running from inside .next/standalone, resolve to the actual project root
+  if (cwd.includes(path.join('.next', 'standalone')) || cwd.endsWith('standalone')) {
+    const projectRoot = path.resolve(cwd, '..', '..');
+    return path.join(projectRoot, 'data');
+  }
+  return path.join(cwd, 'data');
+}
+
+const DATA_DIR = resolveDataDir();
 if (!fs.existsSync(/*turbopackIgnore: true*/ DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
-const DB_PATH = process.env.DATABASE_PATH || path.join(DATA_DIR, 'reunion.db');
+export function getDbPath(): string {
+  return process.env.DATABASE_PATH || path.join(DATA_DIR, 'reunion.db');
+}
+
+const DB_PATH = getDbPath();
 
 // Password hashing helper using Node.js crypto
 export function hashPassword(password: string): string {
