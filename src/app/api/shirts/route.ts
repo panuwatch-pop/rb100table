@@ -16,7 +16,9 @@ export async function GET() {
         shirt_types: shirtTypes,
         shipping_fee: parseInt(settings.shirt_shipping_fee || '50', 10),
         promptpay_number: settings.promptpay_number || '',
-        promptpay_name: settings.promptpay_name || ''
+        promptpay_name: settings.promptpay_name || '',
+        promptpay_bank: settings.promptpay_bank || 'ธนาคารกรุงไทย',
+        promptpay_qr_image: settings.promptpay_qr_image || '/krungthai_qr.jpg'
       }
     });
   } catch (err: any) {

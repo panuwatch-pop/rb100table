@@ -1,4 +1,4 @@
-export const APP_VERSION = 'v1.3.2';
+export const APP_VERSION = 'v1.3.3';
 export const APP_RELEASE_DATE = '2026-11-16';
 
 export interface VersionHistoryItem {
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.3',
+    date: '2026-11-16',
+    changes: [
+      'เพิ่มระบบให้แอดมินแก้ไขเลขพร้อมเพย์/เลขบัญชี, ชื่อบัญชี และชื่อธนาคารได้อย่างอิสระจากหน้า Admin Settings',
+      'เพิ่มระบบอัปโหลดเปลี่ยนรูปภาพ QR Code พร้อมแสดงภาพพรีวิวในหน้าแอดมิน',
+      'ปรับระบบหน้าจองโต๊ะและหน้าร้านสั่งซื้อเสื้อให้ดึงรูป QR Code, เลขบัญชี และชื่อผู้รับเงินตามการตั้งค่าของแอดมินแบบเรียลไทม์'
+    ]
+  },
   {
     version: 'v1.3.2',
     date: '2026-11-16',

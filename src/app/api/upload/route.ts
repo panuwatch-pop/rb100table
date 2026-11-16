@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const folder = (formData.get('folder') as string) === 'shirts' ? 'shirts' : 'slips';
+    const requestedFolder = formData.get('folder') as string;
+    const folder = requestedFolder === 'qr' ? 'qr' : requestedFolder === 'shirts' ? 'shirts' : 'slips';
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', folder);
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });

@@ -31,6 +31,8 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
   const [shippingFee, setShippingFee] = useState(50);
   const [promptpayNumber, setPromptpayNumber] = useState('');
   const [promptpayName, setPromptpayName] = useState('');
+  const [promptpayQrImage, setPromptpayQrImage] = useState('/krungthai_qr.jpg');
+  const [promptpayBank, setPromptpayBank] = useState('ธนาคารกรุงไทย');
   const [loading, setLoading] = useState(true);
 
   // Active view per shirt type (id -> 'front' | 'back')
@@ -77,6 +79,8 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
           setShippingFee(json.data.shipping_fee || 50);
           setPromptpayNumber(json.data.promptpay_number || '');
           setPromptpayName(json.data.promptpay_name || '');
+          setPromptpayQrImage(json.data.promptpay_qr_image || '/krungthai_qr.jpg');
+          setPromptpayBank(json.data.promptpay_bank || 'ธนาคารกรุงไทย');
 
           // Initialize view to front
           const initialViews: Record<number, 'front' | 'back'> = {};
@@ -636,18 +640,18 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                     <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[200px] mx-auto text-center">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src="/krungthai_qr.jpg"
-                        alt="PromptPay QR Code ธนาคารกรุงไทย"
+                        src={promptpayQrImage || "/krungthai_qr.jpg"}
+                        alt={`PromptPay QR Code ${promptpayBank || 'ธนาคารกรุงไทย'}`}
                         className="w-full h-auto object-contain rounded-lg"
                       />
                     </div>
 
                     <div className="text-center space-y-0.5 text-xs">
                       <div className="font-extrabold text-blue-950">
-                        ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
+                        ชื่อบัญชี: <span className="text-slate-900">{promptpayName || 'นาย ศุภชัย พร้อมจิตต์'}</span>
                       </div>
                       <div className="text-[11px] text-slate-600">
-                        พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                        พร้อมเพย์/เลขบัญชี: <strong className="text-slate-900 font-mono">{promptpayNumber || '3101500616030'}</strong> {promptpayBank ? `(${promptpayBank})` : ''}
                       </div>
                     </div>
 
@@ -820,17 +824,17 @@ export default function ShirtShop({ onBackToMap }: ShirtShopProps) {
                 <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[200px] mx-auto text-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/krungthai_qr.jpg"
-                    alt="PromptPay QR Code ธนาคารกรุงไทย"
+                    src={promptpayQrImage || "/krungthai_qr.jpg"}
+                    alt={`PromptPay QR Code ${promptpayBank || 'ธนาคารกรุงไทย'}`}
                     className="w-full h-auto object-contain rounded-lg"
                   />
                 </div>
                 <div className="text-center space-y-0.5 text-xs text-slate-700">
                   <div className="font-extrabold text-blue-950">
-                    ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
+                    ชื่อบัญชี: <span className="text-slate-900">{promptpayName || 'นาย ศุภชัย พร้อมจิตต์'}</span>
                   </div>
                   <div className="text-[11px] text-slate-600">
-                    พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                    พร้อมเพย์/เลขบัญชี: <strong className="text-slate-900 font-mono">{promptpayNumber || '3101500616030'}</strong> {promptpayBank ? `(${promptpayBank})` : ''}
                   </div>
                 </div>
               </div>

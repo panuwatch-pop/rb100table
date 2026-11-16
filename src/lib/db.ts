@@ -184,8 +184,10 @@ function initSchema(db: DatabaseSync) {
     table_default_deposit: '1000',
     early_bird_table_price: '7000',
     shirt_shipping_fee: '50',
-    promptpay_number: '0812345678',
-    promptpay_name: 'บัญชีจัดงานเลี้ยงรุ่น',
+    promptpay_number: '3101500616030',
+    promptpay_name: 'นาย ศุภชัย พร้อมจิตต์',
+    promptpay_bank: 'ธนาคารกรุงไทย',
+    promptpay_qr_image: '/krungthai_qr.jpg',
     line_channel_access_token: '',
     line_group_id: '',
     line_notify_enabled: 'false'

@@ -33,6 +33,8 @@ interface BookingModalProps {
   availableTables: TableItem[];
   promptpayNumber: string;
   promptpayName: string;
+  promptpayQrImage?: string;
+  promptpayBank?: string;
 }
 
 export default function BookingModal({
@@ -43,7 +45,9 @@ export default function BookingModal({
   isAdmin,
   availableTables,
   promptpayNumber,
-  promptpayName
+  promptpayName,
+  promptpayQrImage,
+  promptpayBank
 }: BookingModalProps) {
   // Booking Form State
   const [bookerName, setBookerName] = useState('');
@@ -481,13 +485,13 @@ export default function BookingModal({
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/krungthai_qr.jpg"
-                alt="PromptPay QR Code ธนาคารกรุงไทย"
+                src={promptpayQrImage || "/krungthai_qr.jpg"}
+                alt={`PromptPay QR Code ${promptpayBank || 'ธนาคารกรุงไทย'}`}
                 className="w-56 h-auto mx-auto rounded-xl shadow-md border border-slate-200 bg-white p-1"
               />
               <div className="text-xs text-slate-700 space-y-0.5">
-                <div>ชื่อบัญชี: <strong className="text-slate-900 font-bold">นาย ศุภชัย พร้อมจิตต์</strong></div>
-                <div>พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)</div>
+                <div>ชื่อบัญชี: <strong className="text-slate-900 font-bold">{promptpayName || 'นาย ศุภชัย พร้อมจิตต์'}</strong></div>
+                <div>พร้อมเพย์/เลขบัญชี: <strong className="text-slate-900 font-mono">{promptpayNumber || '3101500616030'}</strong> {promptpayBank ? `(${promptpayBank})` : ''}</div>
               </div>
               <p className="text-[11px] text-emerald-600 font-semibold">
                 ✓ บันทึกการจองและส่งการแจ้งเตือนเข้ากลุ่ม LINE เรียบร้อยแล้วครับ
@@ -773,18 +777,18 @@ export default function BookingModal({
                   <div className="bg-white p-2 rounded-xl border border-blue-100 shadow-xs max-w-[220px] mx-auto">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/krungthai_qr.jpg"
-                      alt="PromptPay QR Code ธนาคารกรุงไทย"
+                      src={promptpayQrImage || "/krungthai_qr.jpg"}
+                      alt={`PromptPay QR Code ${promptpayBank || 'ธนาคารกรุงไทย'}`}
                       className="w-full h-auto object-contain rounded-lg"
                     />
                   </div>
 
                   <div className="space-y-0.5 text-xs">
                     <div className="font-extrabold text-blue-950">
-                      ชื่อบัญชี: <span className="text-slate-900">นาย ศุภชัย พร้อมจิตต์</span>
+                      ชื่อบัญชี: <span className="text-slate-900">{promptpayName || 'นาย ศุภชัย พร้อมจิตต์'}</span>
                     </div>
                     <div className="text-[11px] text-slate-600">
-                      พร้อมเพย์: <strong className="text-slate-900 font-mono">3101500616030</strong> (ธ.กรุงไทย)
+                      พร้อมเพย์/เลขบัญชี: <strong className="text-slate-900 font-mono">{promptpayNumber || '3101500616030'}</strong> {promptpayBank ? `(${promptpayBank})` : ''}
                     </div>
                     <div className="pt-0.5 text-sm font-black text-blue-700">
                       ยอดที่ต้องโอน: {paymentChoice === 'full'

@@ -36,6 +36,8 @@ export default function Home() {
     event_subtitle: 'ผังโต๊ะและการจองโต๊ะเข้าร่วมงาน',
     promptpay_number: '0812345678',
     promptpay_name: 'บัญชีจัดงานเลี้ยงรุ่น',
+    promptpay_bank: 'ธนาคารกรุงไทย',
+    promptpay_qr_image: '/krungthai_qr.jpg',
     table_default_price: 3000,
     table_default_deposit: 1000
   });
@@ -288,6 +290,8 @@ export default function Home() {
           availableTables={availableTables}
           promptpayNumber={settings.promptpay_number}
           promptpayName={settings.promptpay_name}
+          promptpayQrImage={settings.promptpay_qr_image}
+          promptpayBank={settings.promptpay_bank}
         />
       )}
 

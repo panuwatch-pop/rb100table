@@ -32,7 +32,8 @@ import {
   PlusCircle,
   Save,
   Database,
-  UploadCloud
+  UploadCloud,
+  QrCode
 } from 'lucide-react';
 
 interface AdminModalProps {
@@ -115,6 +116,7 @@ export default function AdminModal({
   const [bulkPriceLoading, setBulkPriceLoading] = useState(false);
   const [backupLoading, setBackupLoading] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
 
   // Filter reservations & tables
   const [searchTableQuery, setSearchTableQuery] = useState('');
@@ -526,6 +528,37 @@ export default function AdminModal({
       alert(`❌ เกิดข้อผิดพลาด: ${err.message}`);
     } finally {
       setImportLoading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Upload custom QR Code image
+  const handleUploadQrImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingQr(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'qr');
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'อัปโหลดรูปไม่สำเร็จ');
+
+      setSettings(prev => ({
+        ...prev,
+        promptpay_qr_image: data.url
+      }));
+      alert('อัปโหลดรูปภาพ QR Code สำเร็จ! กรุณากดปุ่ม "บันทึกการตั้งค่าทั้งหมด" ด้านล่างเพื่อยืนยันการใช้งาน');
+    } catch (err: any) {
+      alert(err.message || 'เกิดข้อผิดพลาดในการอัปโหลดรูป');
+    } finally {
+      setUploadingQr(false);
       e.target.value = '';
     }
   };
@@ -1346,31 +1379,80 @@ export default function AdminModal({
                     </div>
                   </div>
 
-                  {/* Section 2: PromptPay Settings */}
+                  {/* Section 2: PromptPay & Bank Settings */}
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-                    <h4 className="font-bold text-slate-900 text-sm">ข้อมูลการรับเงินพร้อมเพย์ (PromptPay QR)</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2">
+                      <QrCode className="w-4 h-4 text-blue-600" />
+                      <h4 className="font-bold text-slate-900 text-sm">ข้อมูลการรับเงินพร้อมเพย์และบัญชีธนาคาร (PromptPay & Bank QR)</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-slate-700 font-medium mb-1">
-                          เบอร์โทรศัพท์ / เลขประจำตัวผู้เสียภาษี
+                          เบอร์พร้อมเพย์ / เลขบัญชี
                         </label>
                         <input
                           type="text"
                           value={settings.promptpay_number || ''}
                           onChange={(e) => setSettings({ ...settings, promptpay_number: e.target.value })}
-                          placeholder="เช่น 0812345678"
-                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
+                          placeholder="เช่น 3101500616030 หรือ 0812345678"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold font-mono"
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-700 font-medium mb-1">ชื่อบัญชี</label>
+                        <label className="block text-slate-700 font-medium mb-1">ชื่อบัญชีผู้รับเงิน</label>
                         <input
                           type="text"
                           value={settings.promptpay_name || ''}
                           onChange={(e) => setSettings({ ...settings, promptpay_name: e.target.value })}
-                          placeholder="เช่น คณะกรรมการจัดงานเลี้ยงรุ่น"
+                          placeholder="เช่น นาย ศุภชัย พร้อมจิตต์"
+                          className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-700 font-medium mb-1">ธนาคาร / รายละเอียด</label>
+                        <input
+                          type="text"
+                          value={settings.promptpay_bank || ''}
+                          onChange={(e) => setSettings({ ...settings, promptpay_bank: e.target.value })}
+                          placeholder="เช่น ธนาคารกรุงไทย"
                           className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
                         />
+                      </div>
+                    </div>
+
+                    {/* QR Code Upload & Preview */}
+                    <div className="pt-2 border-t border-slate-200 flex flex-col sm:flex-row items-center gap-4">
+                      <div className="w-28 h-28 bg-white border border-slate-300 rounded-xl overflow-hidden p-1 shadow-xs shrink-0 flex items-center justify-center relative">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={settings.promptpay_qr_image || '/krungthai_qr.jpg'}
+                          alt="QR Code Preview"
+                          className="w-full h-full object-contain"
+                        />
+                        {uploadingQr && (
+                          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-2xs flex items-center justify-center text-white text-[10px]">
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-slate-600 flex-1">
+                        <div className="font-bold text-slate-800">รูปภาพ QR Code สำหรับโอนเงิน</div>
+                        <p className="text-[11px] text-slate-500">
+                          สามารถอัปโหลดรูปภาพ QR Code พร้อมเพย์ หรือรูป QR บัญชีธนาคารใบใหม่ได้ทันที ภาพนี้จะนำไปแสดงในหน้าจองโต๊ะและหน้าสั่งซื้อเสื้ออัตโนมัติ
+                        </p>
+                        <label className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-white hover:bg-slate-100 border border-blue-300 text-blue-700 rounded-lg font-bold text-xs cursor-pointer shadow-xs transition-all">
+                          <Camera className="w-3.5 h-3.5" />
+                          <span>{uploadingQr ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูปภาพ QR Code'}</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            disabled={uploadingQr}
+                            onChange={handleUploadQrImage}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
                     </div>
                   </div>

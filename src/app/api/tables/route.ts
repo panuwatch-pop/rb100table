@@ -21,6 +21,8 @@ export async function GET() {
             event_subtitle: settings.event_subtitle || 'ผังโต๊ะและการจองโต๊ะเข้าร่วมงาน',
             promptpay_number: settings.promptpay_number || '',
             promptpay_name: settings.promptpay_name || '',
+            promptpay_bank: settings.promptpay_bank || 'ธนาคารกรุงไทย',
+            promptpay_qr_image: settings.promptpay_qr_image || '/krungthai_qr.jpg',
             table_default_price: parseInt(settings.table_default_price || '3000', 10),
             table_default_deposit: parseInt(settings.table_default_deposit || '1000', 10)
           }
