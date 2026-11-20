@@ -1,5 +1,5 @@
-export const APP_VERSION = 'v1.3.6';
-export const APP_RELEASE_DATE = '2026-11-16';
+export const APP_VERSION = 'v1.3.7';
+export const APP_RELEASE_DATE = '2026-11-20';
 
 export interface VersionHistoryItem {
   version: string;
@@ -8,6 +8,15 @@ export interface VersionHistoryItem {
 }
 
 export const VERSION_HISTORY: VersionHistoryItem[] = [
+  {
+    version: 'v1.3.7',
+    date: '2026-11-20',
+    changes: [
+      'อัปเกรด Next.js เป็น 16.4.6 ปิดช่องโหว่ความปลอดภัยระดับ Critical (RCE บน Windows GHSA-p293-qw3h-jr36, DoS Server Actions, SSRF และ Cache Poisoning)',
+      'อัปเดต eslint-config-next เป็น 16.4.6 สอดคล้องกับเวอร์ชัน Next.js ล่าสุด',
+      'ตรวจสอบและคอมไพล์ Production Build พร้อมอัปเดตไฟล์แพ็กเกจ Deploy ZIP'
+    ]
+  },
   {
     version: 'v1.3.6',
     date: '2026-11-16',
